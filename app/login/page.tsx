@@ -41,7 +41,7 @@ export default function LoginPage() {
       }
 
       // ✅ Đăng nhập thành công: chuyển sang dashboard (hoặc trang chủ)
-      router.push("/dashboard"); // nếu chưa có thì tạm đổi thành "/"
+      router.push("/my-learning"); // nếu chưa có thì tạm đổi thành "/"
     } catch (err) {
       console.error(err);
       setError("Không thể kết nối tới server");

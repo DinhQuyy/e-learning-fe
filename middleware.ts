@@ -12,8 +12,8 @@ export function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl;
 
   // Lấy token từ cookie
-  const studentToken = req.cookies.get("access_token")?.value; // E-learning token
-  const adminToken = req.cookies.get("admin_token")?.value;     // Admin token
+  const studentToken = req.cookies.get("directus_access_token")?.value; // E-learning token
+  const adminToken = req.cookies.get("admin_token")?.value;    // Admin token
 
   // Check routes
   const isAdminRoute = ADMIN_PROTECTED_ROUTES.some((route) =>
@@ -52,11 +52,11 @@ export function middleware(req: NextRequest) {
   }
 
   // Đã đăng nhập và access /login or /register → redirect về /my-learning
-  if (isStudentAuthRoute && studentToken) {
-    const myLearningUrl = new URL("/my-learning", req.url);
-    console.log("✅ Xác thực học viên thành công");
-    return NextResponse.redirect(myLearningUrl);
-  }
+  // if (isStudentAuthRoute && studentToken) {
+  //   const myLearningUrl = new URL("/my-learning", req.url);
+  //   console.log("✅ Xác thực học viên thành công");
+  //   return NextResponse.redirect(myLearningUrl);
+  // }
 
   // ALLOW ACCESS
   
