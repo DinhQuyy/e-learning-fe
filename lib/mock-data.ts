@@ -1,0 +1,68 @@
+import { User } from './types';
+
+export const mockUsers: User[] = [
+  {
+    id: 1,
+    name: "Nguyễn Văn An",
+    email: "admin@elearning.com",
+    role: "admin",
+    status: "active",
+    joinedAt: "2024-01-15",
+  },
+  {
+    id: 2,
+    name: "Trần Thị Bình",
+    email: "tranbinh@elearning.com",
+    role: "instructor",
+    status: "active",
+    joinedAt: "2024-02-20",
+  },
+  {
+    id: 3,
+    name: "Lê Minh Châu",
+    email: "leminhchau@elearning.com",
+    role: "student",
+    status: "active",
+    joinedAt: "2024-03-10",
+  },
+  {
+    id: 4,
+    name: "Phạm Hoàng Dũng",
+    email: "phamdung@elearning.com",
+    role: "instructor",
+    status: "active",
+    joinedAt: "2024-03-15",
+  },
+  {
+    id: 5,
+    name: "Võ Thị Em",
+    email: "vothiem@elearning.com",
+    role: "student",
+    status: "inactive",
+    joinedAt: "2024-04-01",
+  },
+  {
+    id: 6,
+    name: "Đặng Quốc Phi",
+    email: "dangphi@elearning.com",
+    role: "student",
+    status: "active",
+    joinedAt: "2024-04-10",
+  },
+  {
+    id: 7,
+    name: "Hoàng Thu Giang",
+    email: "hoangthugiang@elearning.com",
+    role: "instructor",
+    status: "active",
+    joinedAt: "2024-04-20",
+  },
+  {
+    id: 8,
+    name: "Bùi Văn Hùng",
+    email: "buihung@elearning.com",
+    role: "student",
+    status: "active",
+    joinedAt: "2024-05-01",
+  },
+];
