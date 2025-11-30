@@ -8,7 +8,7 @@ export async function GET() {
   try {
     // Gọi đúng endpoint items/courses của Directus
     const res = await fetch(
-      `${DIRECTUS_URL}/items/courses?fields=id,title,slug,description,level,price,image,category.id,category.name`,
+      `${DIRECTUS_URL}/items/courses?fields=id,title,slug,description,level,price,thumbnail,category.id,category.name`,
       {
         // tránh cache để thấy data mới
         cache: "no-store",

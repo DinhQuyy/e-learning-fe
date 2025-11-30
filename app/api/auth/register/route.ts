@@ -6,7 +6,7 @@ const ADMIN_TOKEN = process.env.DIRECTUS_ADMIN_TOKEN;
 // TODO: Khi bạn tạo role "Student" trong Directus, lấy id đó gán vào đây
 // ví dụ: const STUDENT_ROLE_ID = "7f9c8b3c-...";
 // Nếu để undefined thì Directus sẽ dùng role mặc định (nếu có)
-const STUDENT_ROLE_ID = undefined;
+const STUDENT_ROLE_ID = "7e3b7b9e-9cf7-48df-b5c2-625dfa6dfea2";
 
 export async function POST(req: NextRequest) {
   try {
@@ -55,6 +55,7 @@ export async function POST(req: NextRequest) {
       method: "POST",
       headers,
       body: JSON.stringify(payload),
+      
     });
 
     const directusData = await directusRes.json().catch(() => null);
