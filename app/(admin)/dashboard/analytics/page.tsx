@@ -4,13 +4,12 @@ import {
   TrendingUp,
   Users,
   BookOpen,
-  DollarSign,
   Calendar,
   Activity,
   ArrowUp,
   ArrowDown,
 } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 
 type AnalyticsResponse = {
   totalUsers: number;
@@ -29,6 +28,10 @@ type AnalyticsResponse = {
     completion: number;
     revenue: string;
   }[];
+  totalEnrollments: number;
+  monthlyEnrollments: number;
+  monthlyCompletedEnrollments: number;
+  monthlyAvgCompletion: number;
 };
 
 // ===== MOCK FALLBACK DATA (dùng khi API không có dữ liệu) =====
@@ -63,26 +66,31 @@ const MOCK_TOP_COURSES: AnalyticsResponse['topCourses'] = [
   },
 ];
 
-// ===== PAGE COMPONENT =====
-
 export default function AnalyticsPage() {
   const [analytics, setAnalytics] = useState<AnalyticsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Hiển thị mặc định: Năm trước (tất cả tháng backend trả về)
+  const [range, setRange] = useState<'7' | '30' | '90' | '365'>('365');
 
   useEffect(() => {
     const fetchAnalytics = async () => {
       try {
         setError(null);
         const res = await fetch('/api/admin/analytics');
+        const json = (await res.json().catch(() => null)) as
+          | AnalyticsResponse
+          | { message?: string }
+          | null;
 
-        if (!res.ok) {
-          const json = await res.json().catch(() => null);
-          throw new Error(json?.message || 'Không lấy được analytics');
+        if (!res.ok || !json) {
+          const msg =
+            (json as any)?.message || 'Không lấy được dữ liệu analytics';
+          throw new Error(msg);
         }
 
-        const json = (await res.json()) as AnalyticsResponse;
-        setAnalytics(json);
+        setAnalytics(json as AnalyticsResponse);
       } catch (err: any) {
         console.error('AnalyticsPage error:', err);
         setError(err?.message || 'Không lấy được dữ liệu analytics');
@@ -110,6 +118,95 @@ export default function AnalyticsPage() {
   const totalCourses = analytics?.totalCourses ?? 0;
   const avgCompletion = analytics?.avgCompletion ?? 0;
 
+  const totalEnrollments = analytics?.totalEnrollments ?? 0;
+  const monthlyEnrollments = analytics?.monthlyEnrollments ?? 0;
+  const monthlyCompletedEnrollments =
+    analytics?.monthlyCompletedEnrollments ?? 0;
+  const monthlyAvgCompletion = analytics?.monthlyAvgCompletion ?? 0;
+
+  // Quy đổi tiến độ trung bình trong tháng (0–100%) -> đánh giá (0–5)
+  const avgRating =
+    monthlyAvgCompletion > 0 ? (monthlyAvgCompletion / 20).toFixed(1) : '0.0';
+
+  // ===== TÍNH TREND % TỰ ĐỘNG =====
+
+  const calcTrend = (current: number, previous: number) => {
+    if (previous === 0) {
+      if (current === 0) return 0;
+      // nếu tháng trước = 0, tháng này > 0 => xem như tăng 100%
+      return 100;
+    }
+    return ((current - previous) / Math.abs(previous)) * 100;
+  };
+
+  const hasHistory = monthlyData.length >= 2;
+  const lastMonth = hasHistory
+    ? monthlyData[monthlyData.length - 1]
+    : monthlyData[monthlyData.length - 1] ?? {
+        activeStudents: 0,
+        completionRate: 0,
+        activeCourses: 0,
+      };
+  const prevMonth = hasHistory
+    ? monthlyData[monthlyData.length - 2]
+    : lastMonth;
+
+  // 1) Trend học viên đang hoạt động (dùng trong card 2)
+  const activeTrend = calcTrend(
+    lastMonth.activeStudents || 0,
+    prevMonth.activeStudents || 0,
+  );
+
+  // 2) Trend tiến độ trung bình (card 3)
+  const progressTrend = calcTrend(
+    lastMonth.completionRate || 0,
+    prevMonth.completionRate || 0,
+  );
+
+  // 3) Trend khoá học đang hoạt động (card 4)
+  const courseTrend = calcTrend(
+    lastMonth.activeCourses || 0,
+    prevMonth.activeCourses || 0,
+  );
+
+  // 4) Trend tổng số học viên (card 1) – tạm dùng cùng trend với activeStudents
+  const totalUsersTrend = activeTrend;
+
+  // 5) Trend tổng ghi danh trong tháng (card dưới cùng 1)
+  const monthlyEnrollTrend =
+    totalEnrollments === 0
+      ? 0
+      : (monthlyEnrollments / totalEnrollments) * 100;
+
+  // 6) Trend khoá học hoàn thành trong tháng (card dưới cùng 2)
+  const monthlyCompletedTrend =
+    monthlyEnrollments === 0
+      ? 0
+      : (monthlyCompletedEnrollments / monthlyEnrollments) * 100;
+
+  // 7) Trend đánh giá trung bình (card dưới cùng 3)
+  const ratingTrend =
+    avgCompletion === 0
+      ? 0
+      : ((monthlyAvgCompletion - avgCompletion) / avgCompletion) * 100;
+
+  // Lọc dữ liệu theo range đang chọn
+  const filteredMonthlyData = useMemo(() => {
+    if (!monthlyData || monthlyData.length === 0) return [];
+
+    switch (range) {
+      case '7':
+        return monthlyData.slice(-1);
+      case '30':
+        return monthlyData.slice(-3);
+      case '90':
+        return monthlyData.slice(-6);
+      case '365':
+      default:
+        return monthlyData;
+    }
+  }, [monthlyData, range]);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -127,7 +224,13 @@ export default function AnalyticsPage() {
         </div>
 
         <div className="flex items-center gap-3">
-          <select className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <select
+            className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+            value={range}
+            onChange={(e) =>
+              setRange(e.target.value as '7' | '30' | '90' | '365')
+            }
+          >
             <option value="7">7 ngày gần đây</option>
             <option value="30">30 ngày gần đây</option>
             <option value="90">90 ngày gần đây</option>
@@ -141,48 +244,44 @@ export default function AnalyticsPage() {
 
       {/* Summary cards */}
       <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-        {/* Tổng số học viên */}
         <SummaryCard
           title="Tổng số học viên"
           value={loading ? '...' : totalUsers.toLocaleString('vi-VN')}
           description="Tất cả học viên đã đăng ký"
           icon={Users}
           color="blue"
-          trend="up"
-          trendLabel="+3.2%"
+          trend={totalUsersTrend >= 0 ? 'up' : 'down'}
+          trendLabel={`${totalUsersTrend >= 0 ? '+' : ''}${totalUsersTrend.toFixed(1)}%`}
         />
 
-        {/* Học viên đang hoạt động */}
         <SummaryCard
           title="Học viên đang hoạt động"
           value={loading ? '...' : activeStudents.toLocaleString('vi-VN')}
           description="Đăng nhập & học trong 30 ngày gần nhất"
           icon={Activity}
           color="green"
-          trend={activeStudents > 0 ? 'up' : 'down'}
-          trendLabel={activeStudents > 0 ? '+1.8%' : '-'}
+          trend={activeTrend >= 0 ? 'up' : 'down'}
+          trendLabel={`${activeTrend >= 0 ? '+' : ''}${activeTrend.toFixed(1)}%`}
         />
 
-        {/* Tiến độ trung bình */}
         <SummaryCard
           title="Tiến độ trung bình"
           value={loading ? '...' : `${avgCompletion.toFixed(1)}%`}
           description="Tỷ lệ hoàn thành khoá học trung bình"
           icon={BookOpen}
           color="purple"
-          trend="up"
-          trendLabel="+0.8%"
+          trend={progressTrend >= 0 ? 'up' : 'down'}
+          trendLabel={`${progressTrend >= 0 ? '+' : ''}${progressTrend.toFixed(1)}%`}
         />
 
-        {/* Khoá học đang hoạt động */}
         <SummaryCard
           title="Khoá học đang hoạt động"
           value={loading ? '...' : totalCourses.toString()}
           description="Khoá đang mở ghi danh"
           icon={TrendingUp}
           color="orange"
-          trend="up"
-          trendLabel="+2"
+          trend={courseTrend >= 0 ? 'up' : 'down'}
+          trendLabel={`${courseTrend >= 0 ? '+' : ''}${courseTrend.toFixed(1)}%`}
         />
       </div>
 
@@ -196,21 +295,19 @@ export default function AnalyticsPage() {
             </h2>
           </div>
 
-          {monthlyData.length === 0 ? (
+          {filteredMonthlyData.length === 0 ? (
             <div className="flex items-center justify-center h-40 text-sm text-gray-500">
               Chưa có dữ liệu để hiển thị
             </div>
           ) : (
             <div className="space-y-4">
-              {monthlyData.map((data) => {
+              {filteredMonthlyData.map((data) => {
+                const maxActive = Math.max(
+                  ...filteredMonthlyData.map((d) => d.activeStudents || 1),
+                );
                 const percent =
-                  monthlyData.length > 0
-                    ? (data.activeStudents /
-                        Math.max(
-                          ...monthlyData.map((d) => d.activeStudents || 1),
-                        )) *
-                      100
-                    : 0;
+                  maxActive > 0 ? (data.activeStudents / maxActive) * 100 : 0;
+
                 return (
                   <div
                     key={data.month}
@@ -301,13 +398,13 @@ export default function AnalyticsPage() {
           </h2>
         </div>
 
-        {monthlyData.length === 0 ? (
+        {filteredMonthlyData.length === 0 ? (
           <div className="flex items-center justify-center h-40 text-sm text-gray-500">
             Chưa có dữ liệu để hiển thị
           </div>
         ) : (
           <div className="space-y-4">
-            {monthlyData.map((data) => (
+            {filteredMonthlyData.map((data) => (
               <div key={data.month} className="flex items-center gap-4">
                 <div className="w-12 text-sm text-gray-600">{data.month}</div>
                 <div className="flex-1">
@@ -331,47 +428,78 @@ export default function AnalyticsPage() {
         )}
       </div>
 
-      {/* Extra stats cards dưới cùng (optional, giữ cho giống UI cũ) */}
+      {/* Extra stats cards dưới cùng – dùng dữ liệu thật */}
       <div className="grid gap-6 md:grid-cols-3">
+        {/* Tổng ghi danh trong tháng */}
         <div className="p-6 bg-white border border-gray-200 rounded-lg shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <Calendar className="w-8 h-8 text-blue-600" />
-            <span className="text-sm font-medium text-green-600">+8.5%</span>
+            <span
+              className={`text-sm font-medium ${
+                monthlyEnrollTrend >= 0 ? 'text-green-600' : 'text-red-600'
+              }`}
+            >
+              {`${monthlyEnrollTrend >= 0 ? '+' : ''}${monthlyEnrollTrend.toFixed(
+                1,
+              )}%`}
+            </span>
           </div>
           <p className="text-2xl font-bold text-gray-900">
-            {(totalUsers + 597).toLocaleString('vi-VN')}
+            {loading ? '...' : monthlyEnrollments.toLocaleString('vi-VN')}
           </p>
           <p className="mt-1 text-sm text-gray-600">Tổng ghi danh</p>
           <p className="mt-2 text-xs text-gray-500">Trong tháng</p>
         </div>
 
+        {/* Khoá học hoàn thành trong tháng */}
         <div className="p-6 bg-white border border-gray-200 rounded-lg shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <BookOpen className="w-8 h-8 text-green-600" />
-            <span className="text-sm font-medium text-green-600">+12.3%</span>
+            <span
+              className={`text-sm font-medium ${
+                monthlyCompletedTrend >= 0 ? 'text-green-600' : 'text-red-600'
+              }`}
+            >
+              {`${monthlyCompletedTrend >= 0 ? '+' : ''}${monthlyCompletedTrend.toFixed(
+                1,
+              )}%`}
+            </span>
           </div>
           <p className="text-2xl font-bold text-gray-900">
-            {Math.max(1, Math.round((avgCompletion / 100) * totalCourses * 5))}
+            {loading
+              ? '...'
+              : monthlyCompletedEnrollments.toLocaleString('vi-VN')}
           </p>
           <p className="mt-1 text-sm text-gray-600">Khoá học hoàn thành</p>
           <p className="mt-2 text-xs text-gray-500">Trong tháng</p>
         </div>
 
+        {/* Đánh giá trung bình (quy đổi từ tiến độ) */}
         <div className="p-6 bg-white border border-gray-200 rounded-lg shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <TrendingUp className="w-8 h-8 text-purple-600" />
-            <span className="text-sm font-medium text-green-600">+5.7%</span>
+            <span
+              className={`text-sm font-medium ${
+                ratingTrend >= 0 ? 'text-green-600' : 'text-red-600'
+              }`}
+            >
+              {`${ratingTrend >= 0 ? '+' : ''}${ratingTrend.toFixed(1)}%`}
+            </span>
           </div>
-          <p className="text-2xl font-bold text-gray-900">4.8</p>
+          <p className="text-2xl font-bold text-gray-900">
+            {loading ? '...' : avgRating}
+          </p>
           <p className="mt-1 text-sm text-gray-600">Đánh giá trung bình</p>
-          <p className="mt-2 text-xs text-gray-500">Tất cả các khoá học</p>
+          <p className="mt-2 text-xs text-gray-500">
+            Quy đổi từ tiến độ hoàn thành khoá học
+          </p>
         </div>
       </div>
     </div>
   );
 }
 
-// ===== REUSABLE SUMMARY CARD COMPONENT =====
+// ===== SUMMARY CARD COMPONENT =====
 
 type SummaryCardProps = {
   title: string;

@@ -189,10 +189,11 @@ export default function CoursesPage() {
                     <div className="text-sm text-gray-900">{course.students}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">
-                      ₫{course.price.toLocaleString()}
-                    </div>
-                  </td>
+  <div className="text-sm text-gray-900">
+    ₫{Number(course.price).toLocaleString("vi-VN")}
+  </div>
+</td>
+
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span
                       className={`px-2 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadge(

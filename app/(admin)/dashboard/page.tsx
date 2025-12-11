@@ -1,54 +1,40 @@
 'use client';
 
-import { 
-  Users, 
-  BookOpen, 
-  DollarSign, 
+import {
+  Users,
+  BookOpen,
+  DollarSign,
   TrendingUp,
   ArrowUp,
   ArrowDown,
   Activity,
   UserCheck,
-  Clock
+  Clock,
 } from 'lucide-react';
 import Link from 'next/link';
+import { useEffect, useState, useMemo } from 'react';
 
-// Mock data
-const stats = [
-  {
-    title: 'Tổng Người dùng',
-    value: '1,250',
-    change: '+12.5%',
-    trend: 'up',
-    icon: Users,
-    color: 'blue',
-  },
-  {
-    title: 'Tổng khoá học',
-    value: '45',
-    change: '+3',
-    trend: 'up',
-    icon: BookOpen,
-    color: 'green',
-  },
-  {
-    title: 'Doanh thu',
-    value: '₫125M',
-    change: '+8.2%',
-    trend: 'up',
-    icon: DollarSign,
-    color: 'purple',
-  },
-  {
-    title: 'Học viên còn hoạt động',
-    value: '980',
-    change: '-2.4%',
-    trend: 'down',
-    icon: TrendingUp,
-    color: 'orange',
-  },
-];
+type AnalyticsResponse = {
+  totalUsers: number;
+  activeStudents: number;
+  totalCourses: number;
+  avgCompletion: number;
+  monthlyData: {
+    month: string;
+    activeStudents: number;
+    completionRate: number;
+    activeCourses: number;
+  }[];
+  topCourses: {
+    name: string;
+    students: number;
+    completion: number; // 0–100
+    revenue: string; // "₫398.000"
+  }[];
+  // nếu route.ts của bạn có thêm các field khác (totalEnrollments, …) thì để cũng không sao
+};
 
+// ===== MOCK RECENT ACTIVITIES (chưa có log thật) =====
 const recentActivities = [
   {
     id: 1,
@@ -80,7 +66,8 @@ const recentActivities = [
   },
 ];
 
-const topCourses = [
+// ===== MOCK TOP COURSES (fallback khi API lỗi) =====
+const MOCK_TOP_COURSES = [
   {
     id: 1,
     title: 'Next.js Full Stack Development',
@@ -111,15 +98,155 @@ const topCourses = [
   },
 ];
 
+function calcTrend(current: number, previous: number) {
+  if (previous === 0) {
+    if (current === 0) return 0;
+    return 100; // từ 0 → >0 thì xem như +100%
+  }
+  return ((current - previous) / Math.abs(previous)) * 100;
+}
+
 export default function DashboardPage() {
+  const [analytics, setAnalytics] = useState<AnalyticsResponse | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      try {
+        setError(null);
+        const res = await fetch('/api/admin/analytics');
+        const json = await res.json().catch(() => null);
+
+        if (!res.ok || !json) {
+          throw new Error(
+            (json as any)?.message || 'Không lấy được dữ liệu analytics',
+          );
+        }
+
+        setAnalytics(json as AnalyticsResponse);
+      } catch (err: any) {
+        console.error('Dashboard analytics error:', err);
+        setError(err?.message || 'Không lấy được dữ liệu analytics');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchAnalytics();
+  }, []);
+
+  // ===== BIẾN TÓM TẮT =====
+  const totalUsers = analytics?.totalUsers ?? 0;
+  const totalCourses = analytics?.totalCourses ?? 0;
+  const activeStudents = analytics?.activeStudents ?? 0;
+
+  const monthlyData = analytics?.monthlyData ?? [];
+
+  const hasHistory = monthlyData.length >= 2;
+  const lastMonth = hasHistory
+    ? monthlyData[monthlyData.length - 1]
+    : monthlyData[monthlyData.length - 1] ?? {
+        activeStudents: 0,
+        completionRate: 0,
+        activeCourses: 0,
+      };
+  const prevMonth = hasHistory
+    ? monthlyData[monthlyData.length - 2]
+    : lastMonth;
+
+  // Trend cho dashboard (đơn giản, dùng dữ liệu tháng cuối vs tháng trước)
+  const activeTrend = calcTrend(
+    lastMonth.activeStudents || 0,
+    prevMonth.activeStudents || 0,
+  );
+  const coursesTrend = calcTrend(
+    lastMonth.activeCourses || 0,
+    prevMonth.activeCourses || 0,
+  );
+  const usersTrend = activeTrend; // tạm dùng cùng trend với active students
+
+  // Tổng doanh thu = tổng revenue của topCourses từ API
+  const totalRevenueNumber = useMemo(() => {
+    if (!analytics?.topCourses?.length) return 0;
+    return analytics.topCourses.reduce((sum, course) => {
+      // revenue dạng "₫398.000" → chỉ lấy số
+      const digits = course.revenue.replace(/[^\d]/g, '');
+      const value = parseInt(digits || '0', 10);
+      return sum + value;
+    }, 0);
+  }, [analytics]);
+
+  const totalRevenueText = loading
+    ? '...'
+    : '₫' + totalRevenueNumber.toLocaleString('vi-VN');
+
+  // Trend doanh thu: vì chưa có dữ liệu theo tháng nên dùng đơn giản:
+  const revenueTrend = totalRevenueNumber > 0 ? 100 : 0;
+
+  const formatTrend = (v: number) =>
+    `${v >= 0 ? '+' : ''}${v.toFixed(1)}%`;
+
+  // ===== TOP COURSES CHO BẢNG =====
+  const topCourses =
+    analytics && analytics.topCourses?.length
+      ? analytics.topCourses.map((c, index) => ({
+          id: index + 1,
+          title: c.name,
+          students: c.students,
+          revenue: c.revenue,
+          // quy đổi completion (0–100) ra rating (0–5)
+          rating: parseFloat((c.completion / 20).toFixed(1)),
+        }))
+      : MOCK_TOP_COURSES;
+
+  // ===== STATS ARRAY (DÙNG DỮ LIỆU THẬT) =====
+  const stats = [
+    {
+      title: 'Tổng Người dùng',
+      value: loading ? '...' : totalUsers.toLocaleString('vi-VN'),
+      change: formatTrend(usersTrend),
+      trend: usersTrend >= 0 ? 'up' : 'down',
+      icon: Users,
+      color: 'blue',
+    },
+    {
+      title: 'Tổng khoá học',
+      value: loading ? '...' : totalCourses.toString(),
+      change: formatTrend(coursesTrend),
+      trend: coursesTrend >= 0 ? 'up' : 'down',
+      icon: BookOpen,
+      color: 'green',
+    },
+    {
+      title: 'Doanh thu',
+      value: totalRevenueText,
+      change: formatTrend(revenueTrend),
+      trend: revenueTrend >= 0 ? 'up' : 'down',
+      icon: DollarSign,
+      color: 'purple',
+    },
+    {
+      title: 'Học viên còn hoạt động',
+      value: loading ? '...' : activeStudents.toString(),
+      change: formatTrend(activeTrend),
+      trend: activeTrend >= 0 ? 'up' : 'down',
+      icon: TrendingUp,
+      color: 'orange',
+    },
+  ] as const;
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Dashboard Overview</h1>
-        <p className="mt-2 text-gray-600">
-          Chào mừng trở lại!
-        </p>
+        <p className="mt-2 text-gray-600">Chào mừng trở lại!</p>
+        {error && (
+          <p className="mt-1 text-sm text-orange-600">
+            {error} — đang hiển thị một phần dữ liệu mẫu.
+          </p>
+        )}
       </div>
 
       {/* Stats Grid */}
@@ -132,19 +259,25 @@ export default function DashboardPage() {
             purple: 'bg-purple-100 text-purple-600',
             orange: 'bg-orange-100 text-orange-600',
           };
-          
+
           return (
             <div
               key={stat.title}
               className="p-6 transition-shadow bg-white border border-gray-200 rounded-lg shadow-sm hover:shadow-md"
             >
               <div className="flex items-center justify-between mb-4">
-                <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${colors[stat.color as keyof typeof colors]}`}>
+                <div
+                  className={`w-12 h-12 rounded-lg flex items-center justify-center ${
+                    colors[stat.color as keyof typeof colors]
+                  }`}
+                >
                   <Icon className="w-6 h-6" />
                 </div>
-                <div className={`flex items-center gap-1 text-sm font-medium ${
-                  stat.trend === 'up' ? 'text-green-600' : 'text-red-600'
-                }`}>
+                <div
+                  className={`flex items-center gap-1 text-sm font-medium ${
+                    stat.trend === 'up' ? 'text-green-600' : 'text-red-600'
+                  }`}
+                >
                   {stat.trend === 'up' ? (
                     <ArrowUp className="w-4 h-4" />
                   ) : (
@@ -166,7 +299,9 @@ export default function DashboardPage() {
         {/* Recent Activities */}
         <div className="bg-white border border-gray-200 rounded-lg shadow-sm lg:col-span-2">
           <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-bold text-gray-900">Các hoạt động gần đây</h2>
+            <h2 className="text-xl font-bold text-gray-900">
+              Các hoạt động gần đây
+            </h2>
           </div>
           <div className="p-6">
             <div className="space-y-4">
@@ -181,8 +316,12 @@ export default function DashboardPage() {
                       <Icon className="w-5 h-5 text-blue-600" />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-gray-900">{activity.title}</p>
-                      <p className="mt-1 text-xs text-gray-500">{activity.time}</p>
+                      <p className="text-sm text-gray-900">
+                        {activity.title}
+                      </p>
+                      <p className="mt-1 text-xs text-gray-500">
+                        {activity.time}
+                      </p>
                     </div>
                   </div>
                 );
@@ -259,10 +398,14 @@ export default function DashboardPage() {
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-sm text-gray-900">{course.students}</div>
+                    <div className="text-sm text-gray-900">
+                      {course.students}
+                    </div>
                   </td>
                   <td className="px-6 py-4">
-                    <div className="text-sm text-gray-900">{course.revenue}</div>
+                    <div className="text-sm text-gray-900">
+                      {course.revenue}
+                    </div>
                   </td>
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-1">

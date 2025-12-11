@@ -1,36 +1,37 @@
 // app/api/admin/analytics/route.ts
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
 
 const DIRECTUS_URL = process.env.NEXT_PUBLIC_DIRECTUS_URL;
 const ADMIN_TOKEN = process.env.DIRECTUS_ADMIN_TOKEN;
 
-type Enrollment = {
+type DirectusEnrollment = {
   id: number;
-  user: string | null;
-  course: number | string | null;
-  status?: string | null;
-  progress?: number | null;
-  last_activity?: string | null;
-  enrolled_at?: string | null;
+  student: string | null;
+  course: number | null;
+  progress: number | null;
+  status: string | null;
+  started_at: string | null;
+  completed_at: string | null;
+  created_at: string | null;
+  updated_at: string | null;
 };
 
-// Gọi Directus chung
-async function directusFetch(path: string) {
-  if (!DIRECTUS_URL) {
-    throw new Error("Missing NEXT_PUBLIC_DIRECTUS_URL");
-  }
+type DirectusCourse = {
+  id: number;
+  title: string;
+  price: number | null;
+};
 
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-  };
-
-  if (ADMIN_TOKEN) {
-    headers["Authorization"] = `Bearer ${ADMIN_TOKEN}`;
+async function directusFetch<T>(path: string): Promise<T> {
+  if (!DIRECTUS_URL || !ADMIN_TOKEN) {
+    throw new Error("Thiếu DIRECTUS_URL hoặc ADMIN_TOKEN");
   }
 
   const res = await fetch(`${DIRECTUS_URL}/${path}`, {
-    method: "GET",
-    headers,
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${ADMIN_TOKEN}`,
+    },
     cache: "no-store",
   });
 
@@ -38,170 +39,218 @@ async function directusFetch(path: string) {
 
   if (!res.ok) {
     console.error("Directus error:", path, json);
-    throw new Error(json?.errors?.[0]?.message || "Directus error");
+    throw new Error(
+      json?.errors?.[0]?.message || `Directus request failed: ${path}`
+    );
   }
 
-  return json;
+  return (json as any).data ?? json;
 }
 
-// Đếm số bản ghi (dùng meta.total_count nếu có)
-async function fetchDirectusCount(pathWithQuery: string): Promise<number> {
-  const json = await directusFetch(pathWithQuery);
-  const meta = json?.meta || {};
+function getLastNMonthsLabels(n: number) {
+  const now = new Date();
+  const months: { key: string; label: string }[] = [];
 
-  const total =
-    typeof meta.total_count === "number"
-      ? meta.total_count
-      : typeof meta.filter_count === "number"
-      ? meta.filter_count
-      : Array.isArray(json?.data)
-      ? json.data.length
-      : 0;
+  for (let i = n - 1; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
+      2,
+      "0"
+    )}`;
+    const label = d.toLocaleString("en-US", { month: "short" }); // Jan, Feb,...
+    months.push({ key, label });
+  }
 
-  return total;
+  return months;
 }
 
-// Lấy toàn bộ enrollments (dữ liệu không quá lớn nên xử lý trong Node)
-async function fetchAllEnrollments(): Promise<Enrollment[]> {
-  const json = await directusFetch(
-    "items/enrollments?limit=-1&fields=id,student,course,progress,status,started_at,completed_at,created_at,updated_at"
-  );
-  return (json?.data || []) as Enrollment[];
-}
-
-export async function GET(req: NextRequest) {
+export async function GET() {
   try {
-    if (!DIRECTUS_URL) {
-      return NextResponse.json(
-        { message: "Thiếu NEXT_PUBLIC_DIRECTUS_URL" },
-        { status: 500 }
-      );
-    }
+    // 1) Users
+    const users = await directusFetch<any[]>("users?limit=-1");
+    const totalUsers = users.length;
 
-    // 1. Lấy tổng users và courses
-    const [totalUsers, totalCourses, enrollments] = await Promise.all([
-      fetchDirectusCount("users?limit=0&meta=total_count"),
-      fetchDirectusCount("items/courses?limit=0&meta=total_count"),
-      fetchAllEnrollments(),
-    ]);
+    // 2) Courses
+    const courses = await directusFetch<DirectusCourse[]>(
+      "items/courses?limit=-1&fields=id,title,price"
+    );
+    const totalCourses = courses.length;
+    const courseMap = new Map<number, DirectusCourse>();
+    courses.forEach((c) => courseMap.set(c.id, c));
 
-    const now = new Date();
-    const THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
+    // 3) Enrollments
+    const enrollments = await directusFetch<DirectusEnrollment[]>(
+      "items/enrollments?limit=-1&fields=id,student,course,progress,status,started_at,completed_at,created_at,updated_at"
+    );
 
-    // 2. Học viên đang hoạt động = user có last_activity trong 30 ngày
-    const activeUserSet = new Set<string>();
-
-    enrollments.forEach((e) => {
-      if (!e.user || !e.last_activity) return;
-      const last = new Date(e.last_activity).getTime();
-      if (isNaN(last)) return;
-      if (now.getTime() - last <= THIRTY_DAYS) {
-        activeUserSet.add(String(e.user));
-      }
-    });
-
-    const activeStudents = activeUserSet.size || 0;
-
-    // 3. Tiến độ trung bình = avg(progress)
+    // ===== Tổng quan (all time) =====
     const progressValues = enrollments
-      .map((e) => (typeof e.progress === "number" ? e.progress : null))
-      .filter((v): v is number => v !== null);
+      .map((e) => e.progress ?? 0)
+      .filter((v) => v >= 0);
 
     const avgCompletion =
       progressValues.length > 0
-        ? progressValues.reduce((sum, v) => sum + v, 0) / progressValues.length
+        ? progressValues.reduce((s, v) => s + v, 0) / progressValues.length
         : 0;
 
-    // 4. Thống kê theo tháng (đăng ký/enrollment)
-    type MonthAgg = {
-      monthKey: string; // "Jan"
-      activeStudents: Set<string>;
-      completions: number[];
-      courses: Set<string | number>;
-    };
+    // Học viên đang hoạt động = distinct student có progress > 0
+    const activeStudentSet = new Set<string>();
+    enrollments.forEach((e) => {
+      if ((e.progress ?? 0) > 0 && e.student) {
+        activeStudentSet.add(e.student);
+      }
+    });
+    const activeStudents = activeStudentSet.size;
 
-    const monthMap = new Map<string, MonthAgg>();
+    // ===== Thống kê "trong tháng hiện tại" =====
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfNextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+    let totalEnrollments = enrollments.length;
+    let monthlyEnrollments = 0;
+    let monthlyCompletedEnrollments = 0;
+    let monthlyCompletionSum = 0;
+    let monthlyCompletionCount = 0;
 
     enrollments.forEach((e) => {
-      if (!e.enrolled_at) return;
+      const dateStr = e.started_at || e.created_at;
+      if (!dateStr) return;
 
-      const d = new Date(e.enrolled_at);
+      const d = new Date(dateStr);
       if (isNaN(d.getTime())) return;
 
-      const monthKey = d.toLocaleString("en", { month: "short" }); // Jan, Feb, ...
-      if (!monthMap.has(monthKey)) {
-        monthMap.set(monthKey, {
-          monthKey,
-          activeStudents: new Set<string>(),
-          completions: [],
-          courses: new Set(),
-        });
+      if (d >= startOfMonth && d < startOfNextMonth) {
+        monthlyEnrollments += 1;
+
+        const progress = e.progress ?? 0;
+        monthlyCompletionSum += progress;
+        monthlyCompletionCount += 1;
+
+        // coi như "hoàn thành" nếu progress >= 100 hoặc có completed_at
+        if (progress >= 100 || e.completed_at) {
+          monthlyCompletedEnrollments += 1;
+        }
       }
-
-      const bucket = monthMap.get(monthKey)!;
-
-      if (e.user) bucket.activeStudents.add(String(e.user));
-      if (typeof e.progress === "number") bucket.completions.push(e.progress);
-      if (e.course) bucket.courses.add(e.course);
     });
 
-    // Nếu chưa có dữ liệu -> trả rỗng, phía client sẽ fallback sang mock
-    const monthOrder = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const monthlyAvgCompletion =
+      monthlyCompletionCount > 0
+        ? monthlyCompletionSum / monthlyCompletionCount
+        : 0;
 
-    const monthlyData = Array.from(monthMap.values())
-      .sort(
-        (a, b) =>
-          monthOrder.indexOf(a.monthKey) - monthOrder.indexOf(b.monthKey)
-      )
-      .map((m) => {
-        const completionRate =
-          m.completions.length > 0
-            ? m.completions.reduce((s, v) => s + v, 0) / m.completions.length
-            : 0;
+    // ===== Monthly data (12 tháng gần nhất) =====
+    const monthDefs = getLastNMonthsLabels(12);
+    const monthMap: Record<
+      string,
+      {
+        activeStudents: number;
+        completionRates: number[];
+        activeCoursesSet: Set<number>;
+      }
+    > = {};
 
+    monthDefs.forEach((m) => {
+      monthMap[m.key] = {
+        activeStudents: 0,
+        completionRates: [],
+        activeCoursesSet: new Set<number>(),
+      };
+    });
+
+    enrollments.forEach((e) => {
+      const dateStr = e.started_at || e.created_at;
+      if (!dateStr) return;
+
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return;
+
+      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
+        2,
+        "0"
+      )}`;
+      const bucket = monthMap[key];
+      if (!bucket) return; // không thuộc 12 tháng gần nhất
+
+      if ((e.progress ?? 0) > 0) {
+        bucket.activeStudents += 1;
+        bucket.completionRates.push(e.progress ?? 0);
+      }
+
+      if (e.course != null) {
+        bucket.activeCoursesSet.add(e.course);
+      }
+    });
+
+    const monthlyData = monthDefs.map((m) => {
+      const bucket = monthMap[m.key];
+      const completionRate =
+        bucket.completionRates.length > 0
+          ? bucket.completionRates.reduce((s, v) => s + v, 0) /
+            bucket.completionRates.length
+          : 0;
+
+      return {
+        month: m.label,
+        activeStudents: bucket.activeStudents,
+        completionRate,
+        activeCourses: bucket.activeCoursesSet.size,
+      };
+    });
+
+    // ===== Top courses =====
+    const courseStats = new Map<
+      number,
+      { students: number; completionSum: number }
+    >();
+
+    enrollments.forEach((e) => {
+      if (e.course == null) return;
+      const stat =
+        courseStats.get(e.course) || { students: 0, completionSum: 0 };
+      stat.students += 1;
+      stat.completionSum += e.progress ?? 0;
+      courseStats.set(e.course, stat);
+    });
+
+    const topCourses = Array.from(courseStats.entries())
+      .map(([courseId, stat]) => {
+        const course = courseMap.get(courseId);
+        const avgCourseCompletion =
+          stat.students > 0 ? stat.completionSum / stat.students : 0;
+        const revenueRaw = (course?.price ?? 0) * stat.students;
         return {
-          month: m.monthKey,
-          activeStudents: m.activeStudents.size,
-          completionRate,
-          activeCourses: m.courses.size,
+          name: course?.title ?? `Khoá #${courseId}`,
+          students: stat.students,
+          completion: Math.round(avgCourseCompletion),
+          revenue:
+            "₫" +
+            revenueRaw.toLocaleString("vi-VN", {
+              maximumFractionDigits: 0,
+            }),
         };
-      });
-
-    // 5. Tạm giữ topCourses giống mock (có thể nâng cấp sau)
-    const topCourses = [
-      {
-        name: "Next.js Full Stack",
-        students: Math.max(50, Math.round(totalUsers * 0.25)),
-        completion: 85,
-        revenue: "₫45M",
-      },
-      {
-        name: "React Native Apps",
-        students: Math.max(40, Math.round(totalUsers * 0.2)),
-        completion: 78,
-        revenue: "₫38M",
-      },
-      {
-        name: "TypeScript Mastery",
-        students: Math.max(30, Math.round(totalUsers * 0.18)),
-        completion: 92,
-        revenue: "₫32M",
-      },
-    ];
+      })
+      .sort((a, b) => b.students - a.students)
+      .slice(0, 3);
 
     return NextResponse.json({
       totalUsers,
       activeStudents,
       totalCourses,
       avgCompletion,
-      // nếu monthlyData rỗng, client sẽ dùng mock nên không sao
       monthlyData,
       topCourses,
+
+      // thêm cho 3 card phía dưới
+      totalEnrollments,
+      monthlyEnrollments,
+      monthlyCompletedEnrollments,
+      monthlyAvgCompletion,
     });
-  } catch (err) {
+  } catch (err: any) {
     console.error("Analytics API error:", err);
     return NextResponse.json(
-      { message: "Không lấy được dữ liệu analytics" },
+      { message: err?.message || "Không tính được analytics" },
       { status: 500 }
     );
   }
