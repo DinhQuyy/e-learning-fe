@@ -1,30 +1,51 @@
-// app/api/categories/route.ts
 import { NextResponse } from "next/server";
 
-const DIRECTUS_URL = process.env.NEXT_PUBLIC_DIRECTUS_URL!;
+const DIRECTUS_URL =
+  process.env.NEXT_PUBLIC_DIRECTUS_URL || "http://localhost:8055";
+
+const DIRECTUS_TOKEN = process.env.DIRECTUS_ADMIN_TOKEN; // hoặc DIRECTUS_TOKEN của bạn
+
+async function directusFetch(path: string, init?: RequestInit) {
+  const url = `${DIRECTUS_URL}/${path}`;
+
+  const res = await fetch(url, {
+    ...init,
+    cache: "no-store",
+    headers: {
+      "Content-Type": "application/json",
+      ...(DIRECTUS_TOKEN ? { Authorization: `Bearer ${DIRECTUS_TOKEN}` } : {}),
+      ...(init?.headers || {}),
+    },
+  });
+
+  if (res.status === 204) return { res, json: null as any };
+
+  const text = await res.text();
+  const json = text ? JSON.parse(text) : null;
+  return { res, json };
+}
 
 export async function GET() {
   try {
-    const res = await fetch(
-      `${DIRECTUS_URL}/items/categories?fields[]=id&fields[]=name&fields[]=slug`,
-      { cache: "no-store" }
+    // ⚠️ IMPORTANT:
+    // Bên categories của bạn có thể không phải field "name".
+    // Nếu bạn đang bị lỗi "name" -> đổi sang "title".
+    const fields = ["id", "name"].join(",");
+
+    const { res, json } = await directusFetch(
+      `items/categories?limit=-1&fields=${fields}`
     );
 
-    const data = await res.json();
-
     if (!res.ok) {
-      console.error("Directus categories error:", data);
-      return NextResponse.json(
-        { message: "Không lấy được danh mục" },
-        { status: 500 }
-      );
+      const msg =
+        json?.errors?.[0]?.message || "Không lấy được danh sách danh mục";
+      return NextResponse.json({ message: msg }, { status: 500 });
     }
 
-    return NextResponse.json(data.data ?? []);
-  } catch (err) {
-    console.error("Categories API error:", err);
+    return NextResponse.json({ categories: json?.data ?? [] }, { status: 200 });
+  } catch (e: any) {
     return NextResponse.json(
-      { message: "Lỗi server khi lấy danh mục" },
+      { message: e?.message || "Lỗi server khi lấy categories" },
       { status: 500 }
     );
   }

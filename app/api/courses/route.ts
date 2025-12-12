@@ -1,51 +1,73 @@
 // app/api/courses/route.ts
 import { NextResponse } from "next/server";
+import { directusRequest } from "@/lib/directus";
 
-const DIRECTUS_URL =
-  process.env.NEXT_PUBLIC_DIRECTUS_URL || "http://localhost:8055";
-
+// GET /api/courses
 export async function GET() {
   try {
-    // Gọi đúng endpoint items/courses của Directus
-    const res = await fetch(
-      `${DIRECTUS_URL}/items/courses?fields=id,title,slug,description,level,price,thumbnail,category.id,category.name`,
-      {
-        // tránh cache để thấy data mới
-        cache: "no-store",
-      }
+    // chỉ lấy field chắc chắn có
+    const fields = [
+       "id",
+      "title",
+      "slug",
+      "description",
+      "price",
+      "level",
+      "thumbnail",
+      "category",
+      "teacher_name",
+      "status",
+      "students",
+      "rating",
+      "lessons",
+      "duration",
+      "created_at",
+      "updated_at",
+    ].join(",");
+
+    const json = await directusRequest<{ data: any[] }>(
+      `/items/courses?limit=-1&fields=${encodeURIComponent(fields)}`
     );
 
-    const text = await res.text();
-    let json: any = null;
-
-    try {
-      json = JSON.parse(text);
-    } catch (e) {
-      console.error("Không parse được JSON từ Directus:", text);
-      return NextResponse.json(
-        { message: "Dữ liệu Directus trả về không hợp lệ" },
-        { status: 500 }
-      );
-    }
-
-    if (!res.ok) {
-      console.error("Directus error:", res.status, json);
-      return NextResponse.json(
-        {
-          message:
-            json?.errors?.[0]?.message ||
-            `Không lấy được dữ liệu từ Directus (status ${res.status})`,
-        },
-        { status: 500 }
-      );
-    }
-
-    // Trả data đúng format cho FE
-    return NextResponse.json({ data: json.data ?? [] }, { status: 200 });
-  } catch (error) {
-    console.error("API /api/courses bị lỗi:", error);
+    return NextResponse.json({ courses: json?.data ?? [] }, { status: 200 });
+  } catch (e: any) {
     return NextResponse.json(
-      { message: "Lỗi server khi lấy danh sách khoá học" },
+      { message: e?.message || "Không lấy được danh sách khoá học" },
+      { status: 500 }
+    );
+  }
+}
+
+// POST /api/courses
+export async function POST(req: Request) {
+  try {
+    const body = await req.json();
+
+    const payload: any = {
+      title: body.title,
+      slug: body.slug,
+      description: body.description,
+      price: body.price,
+      level: body.level,
+      thumbnail: body.thumbnail,
+      category: body.category,
+      teacher_name: body.teacher_name,
+      status: body.status,
+      students: body.students,
+      rating: body.rating,
+      lessons: body.lessons,
+      duration: body.duration,
+    };
+
+    const json = await directusRequest<{ data: any }>(`/items/courses`, {
+      method: "POST",
+      body: JSON.stringify(payload),
+    });
+
+    return NextResponse.json({ course: json?.data }, { status: 200 });
+  } catch (e: any) {
+    return NextResponse.json(
+      { message: e?.message || "Không tạo được khoá học" },
       { status: 500 }
     );
   }
