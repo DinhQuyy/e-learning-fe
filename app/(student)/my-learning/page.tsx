@@ -19,7 +19,7 @@ import {
   Target
 } from 'lucide-react';
 
-// Mock data - enrolled courses
+// Mock data - enrolled courses 
 const enrolledCourses = [
   {
     id: 1,
