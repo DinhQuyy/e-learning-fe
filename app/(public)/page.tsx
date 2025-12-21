@@ -109,50 +109,6 @@ const features = [
 export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white">
-      {/* Navigation */}
-      <nav className="sticky top-0 z-50 border-b bg-white/80 backdrop-blur-md">
-        <div className="container px-4 py-4 mx-auto">
-          <div className="flex items-center justify-between">
-            {/* Logo */}
-            <Link href="/" className="flex items-center gap-2">
-              <GraduationCap className="w-8 h-8 text-blue-600" />
-              <span className="text-2xl font-bold text-transparent bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text">
-                LearnHub
-              </span>
-            </Link>
-
-            {/* Desktop Menu */}
-            <div className="items-center hidden gap-8 md:flex">
-              <Link href="/courses" className="text-gray-700 transition-colors hover:text-blue-600">
-                Khóa học
-              </Link>
-              <Link href="/about" className="text-gray-700 transition-colors hover:text-blue-600">
-                Về chúng tôi
-              </Link>
-              <Link href="/contact" className="text-gray-700 transition-colors hover:text-blue-600">
-                Liên hệ
-              </Link>
-            </div>
-
-            {/* Auth Buttons */}
-            <div className="flex items-center gap-4">
-              <Link
-                href="/login"
-                className="text-gray-700 transition-colors hover:text-blue-600"
-              >
-                Đăng nhập
-              </Link>
-              <Link
-                href="/register"
-                className="px-6 py-2 text-white transition-all rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:shadow-lg"
-              >
-                Đăng ký
-              </Link>
-            </div>
-          </div>
-        </div>
-      </nav>
-
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-purple-50">
         <div className="container px-4 py-20 mx-auto md:py-32">
@@ -421,54 +377,6 @@ export default function LandingPage() {
           </div>
         </div>
       </section>
-
-      {/* Footer */}
-      <footer className="py-12 text-gray-400 bg-gray-900">
-        <div className="container px-4 mx-auto">
-          <div className="grid gap-8 mb-8 md:grid-cols-4">
-            <div>
-              <div className="flex items-center gap-2 mb-4">
-                <GraduationCap className="w-8 h-8 text-blue-500" />
-                <span className="text-xl font-bold text-white">LearnHub</span>
-              </div>
-              <p className="text-sm">
-                Nền tảng học trực tuyến hàng đầu Việt Nam
-              </p>
-            </div>
-
-            <div>
-              <h4 className="mb-4 font-semibold text-white">Về chúng tôi</h4>
-              <ul className="space-y-2 text-sm">
-                <li><Link href="/about" className="hover:text-white">Giới thiệu</Link></li>
-                <li><Link href="/contact" className="hover:text-white">Liên hệ</Link></li>
-                <li><Link href="/careers" className="hover:text-white">Tuyển dụng</Link></li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="mb-4 font-semibold text-white">Hỗ trợ</h4>
-              <ul className="space-y-2 text-sm">
-                <li><Link href="/help" className="hover:text-white">Trung tâm hỗ trợ</Link></li>
-                <li><Link href="/faq" className="hover:text-white">FAQ</Link></li>
-                <li><Link href="/terms" className="hover:text-white">Điều khoản</Link></li>
-              </ul>
-            </div>
-
-            <div>
-              <h4 className="mb-4 font-semibold text-white">Theo dõi</h4>
-              <div className="flex gap-4">
-                <a href="#" className="hover:text-white">Facebook</a>
-                <a href="#" className="hover:text-white">Twitter</a>
-                <a href="#" className="hover:text-white">LinkedIn</a>
-              </div>
-            </div>
-          </div>
-
-          <div className="pt-8 text-sm text-center border-t border-gray-800">
-            <p>© 2024 LearnHub. All rights reserved.</p>
-          </div>
-        </div>
-      </footer>
     </div>
   );
 }

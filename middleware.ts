@@ -45,11 +45,11 @@ export function middleware(req: NextRequest) {
   // STUDENT ROUTES PROTECTION (E-LEARNING)
   
   // Access mà không có token → redirect về /login của page E-learning
-  if (isStudentProtectedRoute && !studentToken) {
-    const loginUrl = new URL("/login", req.url);
-    console.log("🚫 Chưa thể xác thực người dùng, tự động chuyển về trang Đăng nhập");
-    return NextResponse.redirect(loginUrl);
-  }
+  // if (isStudentProtectedRoute && !studentToken) {
+  //   const loginUrl = new URL("/login", req.url);
+  //   console.log("🚫 Chưa thể xác thực người dùng, tự động chuyển về trang Đăng nhập");
+  //   return NextResponse.redirect(loginUrl);
+  // }
 
   // Đã đăng nhập và access /login or /register → redirect về /my-learning
   // if (isStudentAuthRoute && studentToken) {
