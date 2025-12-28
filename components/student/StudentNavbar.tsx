@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import {
@@ -23,6 +23,46 @@ export default function StudentNavbar() {
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [user, setUser] = useState<{
+    first_name?: string;
+    last_name?: string;
+    email?: string;
+  } | null>(null);
+  const [isLoadingUser, setIsLoadingUser] = useState(true);
+
+  useEffect(() => {
+    let isActive = true;
+
+    const fetchUser = async () => {
+      try {
+        const res = await fetch('/api/auth/me', { cache: 'no-store' });
+        if (!res.ok) {
+          if (isActive) setUser(null);
+          return;
+        }
+        const json = await res.json();
+        if (isActive) setUser(json?.user ?? null);
+      } catch (error) {
+        console.error('Fetch user error:', error);
+      } finally {
+        if (isActive) setIsLoadingUser(false);
+      }
+    };
+
+    fetchUser();
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
+
+  const displayName = [user?.first_name, user?.last_name]
+    .filter(Boolean)
+    .join(' ')
+    .trim();
+  const userName = displayName || user?.email || 'Student';
+  const userEmail = user?.email || (isLoadingUser ? '...' : 'student@example.com');
+  const userInitial = (userName || 'S').charAt(0).toUpperCase();
 
   const notifications = [
     {
@@ -48,13 +88,18 @@ export default function StudentNavbar() {
     },
   ];
 
-  const handleLogout = () => {
-    // Clear cookies
-    document.cookie = 'access_token=; path=/; max-age=0';
-    document.cookie = 'student_token=; path=/; max-age=0';
-    
-    // Redirect to login
-    router.push('/login');
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+
+    setShowProfileMenu(false);
+    setShowNotifications(false);
+    setShowMobileMenu(false);
+    router.replace('/login');
+    router.refresh();
   };
 
   const navLinks = [
@@ -183,10 +228,10 @@ export default function StudentNavbar() {
                 className="flex items-center gap-2 p-2 transition-colors rounded-lg hover:bg-gray-100"
               >
                 <div className="flex items-center justify-center w-8 h-8 text-sm font-semibold text-white rounded-full bg-gradient-to-r from-blue-600 to-purple-600">
-                  S
+                  {userInitial}
                 </div>
                 <span className="hidden text-sm font-medium text-gray-700 md:block">
-                  Student
+                  {isLoadingUser ? '...' : userName}
                 </span>
               </button>
 
@@ -199,8 +244,10 @@ export default function StudentNavbar() {
                   ></div>
                   <div className="absolute right-0 z-20 w-56 py-2 mt-2 bg-white border border-gray-200 rounded-lg shadow-xl">
                     <div className="px-4 py-3 border-b border-gray-200">
-                      <p className="text-sm font-semibold text-gray-900">Student User</p>
-                      <p className="text-xs text-gray-500">student@example.com</p>
+                      <p className="text-sm font-semibold text-gray-900">
+                        {isLoadingUser ? '...' : userName}
+                      </p>
+                      <p className="text-xs text-gray-500">{userEmail}</p>
                     </div>
 
                     <Link

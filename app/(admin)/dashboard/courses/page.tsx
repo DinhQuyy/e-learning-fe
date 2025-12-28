@@ -35,9 +35,14 @@ type Course = {
 
 type CourseForm = {
   title: string;
+  instructor: string;
   slug: string;
   description: string;
   price: number;
+  students: number;
+  rating: number;
+  lessons: number;
+  duration: string;
   level: string | null;
   thumbnail: string | null;
   category: string | number | null; // gửi lên Directus
@@ -52,9 +57,14 @@ const normalize = (value: unknown) =>
 
 const emptyForm: CourseForm = {
   title: '',
+  instructor: '',
   slug: '',
   description: '',
   price: 0,
+  students: 0,
+  rating: 0,
+  lessons: 0,
+  duration: '',
   level: null,
   thumbnail: null,
   category: null,
@@ -218,9 +228,14 @@ export default function CoursesPage() {
 
     setForm({
       title: course.title ?? '',
+      instructor: course.instructor ?? '',
       slug: course.slug ?? '',
       description: course.description ?? '',
       price: Number(course.price ?? 0),
+      students: Number(course.students ?? 0),
+      rating: Number(course.rating ?? 0),
+      lessons: Number(course.lessons ?? 0),
+      duration: course.duration ?? '',
       level: course.level ?? null,
       thumbnail: course.thumbnail ?? null,
       category: course.categoryId ?? null,
@@ -275,10 +290,14 @@ export default function CoursesPage() {
   const handleCreate = async () => {
     try {
       setSaving(true);
+      const payload = {
+        ...form,
+        teacher_name: form.instructor,
+      };
       const res = await fetch('/api/courses', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       });
       const json = await res.json().catch(() => null);
 
@@ -300,10 +319,14 @@ export default function CoursesPage() {
     try {
       setSaving(true);
 
+      const payload = {
+        ...form,
+        teacher_name: form.instructor,
+      };
       const res = await fetch(`/api/courses/${selectedId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       });
       const json = await res.json().catch(() => null);
 
@@ -631,6 +654,11 @@ function CourseModal({
             <div className="text-sm">
               <div className="font-semibold text-gray-900">{course?.title ?? '—'}</div>
               <div className="text-gray-600 mt-1">Giá: ₫{Number(course?.price ?? 0).toLocaleString('vi-VN')}</div>
+              <div className="text-gray-600">Instructor: {course?.instructor ?? 'N/A'}</div>
+              <div className="text-gray-600">Students: {course?.students ?? 0}</div>
+              <div className="text-gray-600">Rating: {course?.rating ?? 0}</div>
+              <div className="text-gray-600">Lessons: {course?.lessons ?? 0}</div>
+              <div className="text-gray-600">Duration: {course?.duration ?? 'N/A'}</div>
               <div className="text-gray-600">Trạng thái: {course?.status ?? '—'}</div>
               <div className="text-gray-600">Danh mục: {course?.categoryName ?? '—'}</div>
               <div className="text-gray-600">Mô tả: {course?.description ?? '—'}</div>
@@ -666,6 +694,14 @@ function CourseModal({
               />
             </Field>
 
+            <Field label="Instructor">
+              <input
+                value={form.instructor}
+                onChange={(e) => setForm({ ...form, instructor: e.target.value })}
+                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </Field>
+
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <Field label="Slug">
                 <input
@@ -682,6 +718,50 @@ function CourseModal({
                   onChange={(e) => setForm({ ...form, price: Number(e.target.value) })}
                   className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   min={0}
+                />
+              </Field>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Field label="Students">
+                <input
+                  type="number"
+                  value={form.students}
+                  onChange={(e) => setForm({ ...form, students: Number(e.target.value) })}
+                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  min={0}
+                />
+              </Field>
+
+              <Field label="Rating">
+                <input
+                  type="number"
+                  value={form.rating}
+                  onChange={(e) => setForm({ ...form, rating: Number(e.target.value) })}
+                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  min={0}
+                  max={5}
+                  step={0.1}
+                />
+              </Field>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Field label="Lessons">
+                <input
+                  type="number"
+                  value={form.lessons}
+                  onChange={(e) => setForm({ ...form, lessons: Number(e.target.value) })}
+                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  min={0}
+                />
+              </Field>
+
+              <Field label="Duration">
+                <input
+                  value={form.duration}
+                  onChange={(e) => setForm({ ...form, duration: e.target.value })}
+                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="vd: 45 hours"
                 />
               </Field>
             </div>
@@ -763,3 +843,5 @@ function CourseModal({
     </div>
   );
 }
+
+

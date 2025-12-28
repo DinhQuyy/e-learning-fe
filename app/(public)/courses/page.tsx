@@ -501,7 +501,7 @@ export default function CoursesPage() {
                         <div className="flex items-center gap-4 text-sm text-gray-500">
                           <div className="flex items-center gap-1">
                             <Users className="w-4 h-4" />
-                            {course.students.toLocaleString()}
+                            {course.students.toLocaleString('vi-VN')}
                           </div>
                           <div className="flex items-center gap-1">
                             <Clock className="w-4 h-4" />
@@ -512,11 +512,11 @@ export default function CoursesPage() {
                         <div className="flex items-center justify-between pt-3 border-t">
                           <div>
                             <div className="text-2xl font-bold text-gray-900">
-                              ₫{course.price.toLocaleString()}
+                              ₫{course.price.toLocaleString('vi-VN')}
                             </div>
                             {course.originalPrice > course.price && (
                               <div className="text-sm text-gray-400 line-through">
-                                ₫{course.originalPrice.toLocaleString()}
+                                ₫{course.originalPrice.toLocaleString('vi-VN')}
                               </div>
                             )}
                           </div>
@@ -588,7 +588,7 @@ export default function CoursesPage() {
                                 </div>
                                 <div className="flex items-center gap-1 text-gray-500">
                                   <Users className="w-4 h-4" />
-                                  {course.students.toLocaleString()} học viên
+                                  {course.students.toLocaleString('vi-VN')} học viên
                                 </div>
                                 <div className="flex items-center gap-1 text-gray-500">
                                   <Clock className="w-4 h-4" />
@@ -599,12 +599,12 @@ export default function CoursesPage() {
 
                             <div className="text-right">
                               <div className="text-3xl font-bold text-gray-900">
-                                ₫{course.price.toLocaleString()}
+                                ₫{course.price.toLocaleString('vi-VN')}
                               </div>
                               {course.originalPrice > course.price && (
                                 <>
                                   <div className="text-sm text-gray-400 line-through">
-                                    ₫{course.originalPrice.toLocaleString()}
+                                    ₫{course.originalPrice.toLocaleString('vi-VN')}
                                   </div>
                                   <div className="mt-1 text-sm font-bold text-green-600">
                                     -{Math.round(((course.originalPrice - course.price) / course.originalPrice) * 100)}%

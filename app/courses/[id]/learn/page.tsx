@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useParams } from 'next/navigation';
 import {
   ChevronLeft,
   ChevronRight,
@@ -79,6 +80,9 @@ const currentLesson = {
 };
 
 export default function LearningPage() {
+  const params = useParams();
+  const courseId = params.id as string;
+  
   const [showSidebar, setShowSidebar] = useState(true);
   const [expandedSection, setExpandedSection] = useState<number>(2);
   const [activeTab, setActiveTab] = useState<'overview' | 'resources' | 'qa'>('overview');
@@ -108,7 +112,7 @@ export default function LearningPage() {
             <Menu className="w-5 h-5" />
           </button>
           <Link
-            href="/my-learning"
+            href={`/courses/${courseId}`}
             className="flex items-center gap-2 text-gray-300 transition-colors hover:text-white"
           >
             <ChevronLeft className="w-5 h-5" />

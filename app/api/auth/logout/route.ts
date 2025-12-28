@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(_req: NextRequest) {
-  const res = NextResponse.json({ message: "Đã đăng xuất" });
+  const res = NextResponse.json({ message: "Logout success" });
 
-  res.cookies.set("access_token", "", {
+  res.cookies.set("directus_access_token", "", {
     path: "/",
     maxAge: 0,
   });
-  res.cookies.set("refresh_token", "", {
+  res.cookies.set("directus_refresh_token", "", {
     path: "/",
     maxAge: 0,
   });

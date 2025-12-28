@@ -42,7 +42,12 @@ export async function PATCH(req: Request, ctx: Ctx) {
       level: body.level,
       thumbnail: body.thumbnail,
       category: body.category ? Number(body.category) : null,
+      teacher_name: body.teacher_name,
       status: body.status,
+      students: body.students,
+      rating: body.rating,
+      lessons: body.lessons,
+      duration: body.duration,
     };
 
     const { res, json } = await directusFetch(`items/courses/${id}`, {
