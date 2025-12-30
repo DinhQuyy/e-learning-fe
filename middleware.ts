@@ -52,11 +52,11 @@ export function middleware(req: NextRequest) {
   }
 
   // Đã đăng nhập và access /login or /register → redirect về /my-learning
-  // if (isStudentAuthRoute && studentToken) {
-  //   const myLearningUrl = new URL("/my-learning", req.url);
-  //   console.log("✅ Xác thực học viên thành công");
-  //   return NextResponse.redirect(myLearningUrl);
-  // }
+  if (isStudentAuthRoute && studentToken) {
+    const myLearningUrl = new URL("/my-learning", req.url);
+    console.log("✅ Xác thực học viên thành công");
+    return NextResponse.redirect(myLearningUrl);
+  }
 
   // ALLOW ACCESS
   
