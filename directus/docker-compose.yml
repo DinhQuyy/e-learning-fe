@@ -1,0 +1,25 @@
+services:
+  directus:
+    image: directus/directus:latest
+    ports:
+      - "8055:8055"
+
+    environment:
+      # 2 key này cứ đặt tạm, sau này có thể đổi
+      KEY: "my_super_secret_key_123"
+      SECRET: "my_super_secret_key_123"
+
+      # Dùng SQLite làm database nội bộ
+      DB_CLIENT: "sqlite3"
+      DB_FILENAME: "/data/db.sqlite"
+
+      # Tự tạo tài khoản admin ban đầu
+      ADMIN_EMAIL: "admin@example.com"
+      ADMIN_PASSWORD: "Admin1234"
+      ADMIN_FIRST_NAME: "Admin"
+      ADMIN_LAST_NAME: "User"
+
+    volumes:
+      - ./data:/data
+
+    restart: unless-stopped
