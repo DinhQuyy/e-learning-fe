@@ -140,7 +140,7 @@ export default function Footer() {
         {/* Bottom Bar */}
         <div className="flex flex-col items-center justify-between gap-4 pt-8 border-t border-gray-800 md:flex-row">
           <p className="text-sm text-center md:text-left">
-            © 2024 LearnHub. All rights reserved.
+            © 2026 LearnHub. All rights reserved.
           </p>
           <div className="flex gap-6 text-sm">
             <Link href="/terms" className="transition-colors hover:text-white">
