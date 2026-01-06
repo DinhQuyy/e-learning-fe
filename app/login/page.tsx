@@ -40,8 +40,17 @@ export default function LoginPage() {
         return;
       }
 
-      // ✅ Đăng nhập thành công: chuyển sang dashboard (hoặc trang chủ)
-      router.push("/my-learning"); // nếu chưa có thì tạm đổi thành "/"
+      // ✅ Đăng nhập thành công
+      // Save token if in real mode
+      if (data.data?.access_token) {
+        document.cookie = `access_token=${data.data.access_token}; path=/; max-age=3600`;
+      } else if (data.mock) {
+        // Mock mode - set mock token
+        document.cookie = `access_token=mock-student-token; path=/; max-age=3600`;
+      }
+
+      // Redirect to my learning
+      router.push("/my-learning");
     } catch (err) {
       console.error(err);
       setError("Không thể kết nối tới server");
@@ -60,26 +69,27 @@ export default function LoginPage() {
             type="email"
             placeholder="Nhập email của bạn"
             value={email}
-            onChange={(e: any) => setEmail(e.target.value)}
+            onChange={(e) => setEmail(e.target.value)}
           />
+
           <FormInput
             label="Mật khẩu"
             name="password"
             type="password"
             placeholder="••••••••"
             value={password}
-            onChange={(e: any) => setPassword(e.target.value)}
+            onChange={(e) => setPassword(e.target.value)}
           />
 
           {error && (
-            <p className="text-sm text-red-500 mt-2 text-center">{error}</p>
+            <p className="mt-2 text-sm text-center text-red-500">{error}</p>
           )}
 
           <Button disabled={loading}>
             {loading ? "Đang đăng nhập..." : "Đăng nhập"}
           </Button>
 
-          <p className="text-sm text-center text-gray-400 mt-4">
+          <p className="mt-4 text-sm text-center text-gray-400">
             Chưa có tài khoản?{" "}
             <Link href="/register" className="text-blue-400 hover:underline">
               Đăng ký ngay
