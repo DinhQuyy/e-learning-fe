@@ -15,7 +15,7 @@ import {
   X
 } from 'lucide-react';
 
-// Mock data
+// Mock data (giữ nguyên)
 const allCourses = [
   {
     id: 1,
@@ -141,13 +141,7 @@ const categories = [
 
 const levels = ['All Levels', 'Beginner', 'Intermediate', 'Advanced'];
 const durations = ['All Durations', 'Under 10 hours', '10-20 hours', '20+ hours'];
-const priceRanges = [
-  'All Prices',
-  'Free',
-  'Under 1M',
-  '1M - 2M',
-  '2M+',
-];
+const priceRanges = ['All Prices', 'Free', 'Under 1M', '1M - 2M', '2M+'];
 
 export default function CoursesPage() {
   const [searchTerm, setSearchTerm] = useState('');
@@ -159,7 +153,7 @@ export default function CoursesPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showFilters, setShowFilters] = useState(false);
 
-  // Filter courses
+  // Filter courses (giữ nguyên logic)
   const filteredCourses = allCourses.filter((course) => {
     const matchesSearch = course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          course.description.toLowerCase().includes(searchTerm.toLowerCase());
@@ -190,7 +184,7 @@ export default function CoursesPage() {
     return matchesSearch && matchesCategory && matchesLevel && matchesDuration && matchesPrice;
   });
 
-  // Sort courses
+  // Sort courses (giữ nguyên)
   const sortedCourses = [...filteredCourses].sort((a, b) => {
     switch (sortBy) {
       case 'popular':
@@ -225,25 +219,26 @@ export default function CoursesPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="py-16 text-white bg-gradient-to-r from-blue-600 to-purple-600">
-        <div className="container px-4 mx-auto">
-          <h1 className="mb-4 text-4xl font-bold md:text-5xl">
+      <div className="relative py-16 overflow-hidden text-white bg-gradient-to-r from-blue-600 to-purple-600">
+        <div className="absolute inset-0 bg-grid-pattern opacity-10"></div>
+        <div className="container relative z-10 px-4 mx-auto">
+          <h1 className="mb-4 text-4xl font-bold md:text-5xl animate-fade-in-up">
             Khám phá khóa học
           </h1>
-          <p className="mb-8 text-xl text-blue-100">
+          <p className="mb-8 text-xl text-blue-100 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
             Tìm khóa học phù hợp với bạn trong hơn 1,200 khóa học chất lượng cao
           </p>
 
           {/* Search Bar */}
-          <div className="max-w-2xl">
-            <div className="relative">
-              <Search className="absolute w-5 h-5 text-gray-400 -translate-y-1/2 left-4 top-1/2" />
+          <div className="max-w-2xl animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
+            <div className="relative group">
+              <Search className="absolute w-5 h-5 text-gray-400 transition-colors -translate-y-1/2 left-4 top-1/2 group-focus-within:text-blue-600" />
               <input
                 type="text"
                 placeholder="Tìm kiếm khóa học..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
-                className="w-full py-4 pl-12 pr-4 text-gray-900 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-300"
+                className="w-full py-4 pl-12 pr-4 text-gray-900 transition-all rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-300"
               />
             </div>
           </div>
@@ -254,88 +249,80 @@ export default function CoursesPage() {
       <div className="container px-4 py-8 mx-auto">
         <div className="flex gap-8">
           {/* Sidebar Filters - Desktop */}
-          <aside className="flex-shrink-0 hidden w-64 lg:block">
-            <div className="sticky p-6 space-y-6 bg-white rounded-xl top-8">
+          <aside className="flex-shrink-0 hidden w-64 lg:block animate-fade-in">
+            <div className="sticky p-6 space-y-6 bg-white border border-gray-200 shadow-sm rounded-xl top-8">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold">Filters</h3>
+                <h3 className="text-lg font-bold">Bộ lọc</h3>
                 {hasActiveFilters && (
                   <button
                     onClick={clearFilters}
-                    className="text-sm text-blue-600 hover:text-blue-700"
+                    className="text-sm text-blue-600 transition-colors hover:text-blue-700 hover:underline"
                   >
-                    Clear all
+                    Xóa tất cả
                   </button>
                 )}
               </div>
 
               {/* Category */}
-              <div>
-                <label className="block mb-2 text-sm font-semibold text-gray-700">
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700">
                   Danh mục
                 </label>
                 <select
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 transition-all border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-blue-400"
                 >
                   {categories.map((cat) => (
-                    <option key={cat} value={cat}>
-                      {cat}
-                    </option>
+                    <option key={cat} value={cat}>{cat}</option>
                   ))}
                 </select>
               </div>
 
               {/* Level */}
-              <div>
-                <label className="block mb-2 text-sm font-semibold text-gray-700">
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700">
                   Trình độ
                 </label>
                 <select
                   value={selectedLevel}
                   onChange={(e) => setSelectedLevel(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 transition-all border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-blue-400"
                 >
                   {levels.map((level) => (
-                    <option key={level} value={level}>
-                      {level}
-                    </option>
+                    <option key={level} value={level}>{level}</option>
                   ))}
                 </select>
               </div>
 
               {/* Duration */}
-              <div>
-                <label className="block mb-2 text-sm font-semibold text-gray-700">
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700">
                   Thời lượng
                 </label>
                 <select
                   value={selectedDuration}
                   onChange={(e) => setSelectedDuration(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 transition-all border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-blue-400"
                 >
                   {durations.map((duration) => (
-                    <option key={duration} value={duration}>
-                      {duration}
-                    </option>
+                    <option key={duration} value={duration}>{duration}</option>
                   ))}
                 </select>
               </div>
 
               {/* Price */}
-              <div>
-                <label className="block mb-2 text-sm font-semibold text-gray-700">
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700">
                   Giá
                 </label>
                 <select
                   value={selectedPrice}
                   onChange={(e) => setSelectedPrice(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 transition-all border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-blue-400"
                 >
                   {priceRanges.map((price) => (
-                    <option key={price} value={price}>
-                      {price}
-                    </option>
+                    <option key={price} value={price}>{price}</option>
                   ))}
                 </select>
               </div>
@@ -345,7 +332,7 @@ export default function CoursesPage() {
           {/* Main Content */}
           <div className="flex-1">
             {/* Toolbar */}
-            <div className="flex flex-wrap items-center justify-between gap-4 p-4 mb-6 bg-white rounded-xl">
+            <div className="flex flex-wrap items-center justify-between gap-4 p-4 mb-6 bg-white border border-gray-200 shadow-sm rounded-xl animate-fade-in">
               <div className="flex items-center gap-4">
                 <span className="font-medium text-gray-700">
                   {sortedCourses.length} khóa học
@@ -354,10 +341,10 @@ export default function CoursesPage() {
                 {/* Mobile Filter Button */}
                 <button
                   onClick={() => setShowFilters(!showFilters)}
-                  className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg lg:hidden hover:bg-gray-50"
+                  className="flex items-center gap-2 px-4 py-2 transition-all border border-gray-300 rounded-lg lg:hidden hover:bg-gray-50 hover:border-blue-500"
                 >
                   <SlidersHorizontal className="w-4 h-4" />
-                  Filters
+                  Bộ lọc
                 </button>
               </div>
 
@@ -366,7 +353,7 @@ export default function CoursesPage() {
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="px-4 py-2 transition-all border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-blue-400"
                 >
                   <option value="popular">Phổ biến nhất</option>
                   <option value="rating">Đánh giá cao nhất</option>
@@ -379,7 +366,7 @@ export default function CoursesPage() {
                 <div className="flex gap-2 p-1 border border-gray-300 rounded-lg">
                   <button
                     onClick={() => setViewMode('grid')}
-                    className={`p-2 rounded ${
+                    className={`p-2 rounded transition-all ${
                       viewMode === 'grid'
                         ? 'bg-blue-100 text-blue-600'
                         : 'text-gray-600 hover:bg-gray-100'
@@ -389,7 +376,7 @@ export default function CoursesPage() {
                   </button>
                   <button
                     onClick={() => setViewMode('list')}
-                    className={`p-2 rounded ${
+                    className={`p-2 rounded transition-all ${
                       viewMode === 'list'
                         ? 'bg-blue-100 text-blue-600'
                         : 'text-gray-600 hover:bg-gray-100'
@@ -403,37 +390,31 @@ export default function CoursesPage() {
 
             {/* Mobile Filters */}
             {showFilters && (
-              <div className="p-6 mb-6 space-y-4 bg-white lg:hidden rounded-xl">
+              <div className="p-6 mb-6 space-y-4 bg-white border border-gray-200 shadow-sm lg:hidden rounded-xl animate-slide-down">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-bold">Filters</h3>
+                  <h3 className="text-lg font-bold">Bộ lọc</h3>
                   <button onClick={() => setShowFilters(false)}>
                     <X className="w-5 h-5" />
                   </button>
                 </div>
                 {/* Same filters as sidebar */}
-                <div>
-                  <label className="block mb-2 text-sm font-semibold text-gray-700">
-                    Danh mục
-                  </label>
+                <div className="space-y-4">
                   <select
                     value={selectedCategory}
                     onChange={(e) => setSelectedCategory(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg"
                   >
                     {categories.map((cat) => (
-                      <option key={cat} value={cat}>
-                        {cat}
-                      </option>
+                      <option key={cat} value={cat}>{cat}</option>
                     ))}
                   </select>
                 </div>
-                {/* Add other filters similarly */}
               </div>
             )}
 
             {/* Courses Grid/List */}
             {sortedCourses.length === 0 ? (
-              <div className="p-12 text-center bg-white rounded-xl">
+              <div className="p-12 text-center bg-white shadow-sm rounded-xl animate-fade-in">
                 <div className="flex items-center justify-center w-16 h-16 mx-auto mb-4 bg-gray-100 rounded-full">
                   <Search className="w-8 h-8 text-gray-400" />
                 </div>
@@ -445,29 +426,30 @@ export default function CoursesPage() {
                 </p>
                 <button
                   onClick={clearFilters}
-                  className="px-6 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+                  className="px-6 py-2 text-white transition-all bg-blue-600 rounded-lg hover:bg-blue-700 hover:scale-105"
                 >
                   Xóa bộ lọc
                 </button>
               </div>
             ) : viewMode === 'grid' ? (
               <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-                {sortedCourses.map((course) => (
+                {sortedCourses.map((course, index) => (
                   <Link
                     key={course.id}
                     href={`/courses/${course.id}`}
-                    className="group"
+                    className="group animate-fade-in-up"
+                    style={{ animationDelay: `${index * 0.05}s` }}
                   >
-                    <div className="overflow-hidden transition-all bg-white border-2 border-gray-200 rounded-xl hover:border-blue-500 hover:shadow-xl">
+                    <div className="overflow-hidden transition-all bg-white border-2 border-gray-200 rounded-xl hover:border-blue-500 hover:shadow-2xl hover:-translate-y-2">
                       {/* Thumbnail */}
                       <div className="relative h-48 overflow-hidden">
                         <img
                           src={course.thumbnail}
                           alt={course.title}
-                          className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
+                          className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-125"
                         />
                         {course.bestseller && (
-                          <div className="absolute px-3 py-1 text-xs font-bold text-yellow-900 bg-yellow-400 rounded-full top-3 left-3">
+                          <div className="absolute px-3 py-1 text-xs font-bold text-yellow-900 bg-yellow-400 rounded-full top-3 left-3 animate-pulse-subtle">
                             Bestseller
                           </div>
                         )}
@@ -533,11 +515,12 @@ export default function CoursesPage() {
               </div>
             ) : (
               <div className="space-y-4">
-                {sortedCourses.map((course) => (
+                {sortedCourses.map((course, index) => (
                   <Link
                     key={course.id}
                     href={`/courses/${course.id}`}
-                    className="block group"
+                    className="block group animate-fade-in"
+                    style={{ animationDelay: `${index * 0.05}s` }}
                   >
                     <div className="overflow-hidden transition-all bg-white border-2 border-gray-200 rounded-xl hover:border-blue-500 hover:shadow-xl">
                       <div className="flex flex-col md:flex-row">
@@ -546,7 +529,7 @@ export default function CoursesPage() {
                           <img
                             src={course.thumbnail}
                             alt={course.title}
-                            className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
+                            className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-110"
                           />
                           {course.bestseller && (
                             <div className="absolute px-3 py-1 text-xs font-bold text-yellow-900 bg-yellow-400 rounded-full top-3 left-3">
@@ -623,6 +606,63 @@ export default function CoursesPage() {
           </div>
         </div>
       </div>
+
+      <style jsx>{`
+        @keyframes fade-in-up {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes fade-in {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
+        @keyframes slide-down {
+          from {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes pulse-subtle {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.8; }
+        }
+
+        .animate-fade-in-up {
+          animation: fade-in-up 0.5s ease-out forwards;
+          opacity: 0;
+        }
+
+        .animate-fade-in {
+          animation: fade-in 0.4s ease-out forwards;
+        }
+
+        .animate-slide-down {
+          animation: slide-down 0.3s ease-out forwards;
+        }
+
+        .animate-pulse-subtle {
+          animation: pulse-subtle 2s ease-in-out infinite;
+        }
+
+        .bg-grid-pattern {
+          background-image: linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
+                            linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px);
+          background-size: 20px 20px;
+        }
+      `}</style>
     </div>
   );
 }

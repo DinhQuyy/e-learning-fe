@@ -1,3 +1,6 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { 
   GraduationCap, 
@@ -107,6 +110,12 @@ const features = [
 ];
 
 export default function LandingPage() {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   return (
     <div className="min-h-screen bg-white">
       {/* Hero Section */}
@@ -114,14 +123,14 @@ export default function LandingPage() {
         <div className="container px-4 py-20 mx-auto md:py-32">
           <div className="grid items-center gap-12 lg:grid-cols-2">
             {/* Left Content */}
-            <div className="space-y-8">
-              <div className="inline-block px-4 py-2 text-sm font-semibold text-blue-700 bg-blue-100 rounded-full">
+            <div className={`space-y-8 ${mounted ? 'animate-fade-in-up' : 'opacity-0'}`}>
+              <div className="inline-block px-4 py-2 text-sm font-semibold text-blue-700 bg-blue-100 rounded-full animate-bounce-subtle">
                 🎉 Hơn 50,000 học viên đã tin tưởng
               </div>
               
               <h1 className="text-5xl font-bold leading-tight text-gray-900 md:text-6xl">
                 Học tập không giới hạn,
-                <span className="text-transparent bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text">
+                <span className="text-transparent bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text animate-gradient">
                   {' '}Phát triển mỗi ngày
                 </span>
               </h1>
@@ -132,14 +141,14 @@ export default function LandingPage() {
               </p>
 
               {/* Search Bar */}
-              <div className="relative">
-                <Search className="absolute w-5 h-5 text-gray-400 -translate-y-1/2 left-4 top-1/2" />
+              <div className="relative group">
+                <Search className="absolute w-5 h-5 text-gray-400 transition-colors -translate-y-1/2 left-4 top-1/2 group-focus-within:text-blue-600" />
                 <input
                   type="text"
                   placeholder="Tìm kiếm khóa học..."
-                  className="w-full py-4 pl-12 pr-4 text-lg border-2 border-gray-200 shadow-sm rounded-xl focus:outline-none focus:border-blue-500"
+                  className="w-full py-4 pl-12 pr-4 text-lg transition-all border-2 border-gray-200 shadow-sm rounded-xl focus:outline-none focus:border-blue-500 focus:shadow-lg"
                 />
-                <button className="absolute px-6 py-2 text-white transition-colors -translate-y-1/2 bg-blue-600 rounded-lg right-2 top-1/2 hover:bg-blue-700">
+                <button className="absolute px-6 py-2 text-white transition-all -translate-y-1/2 bg-blue-600 rounded-lg right-2 top-1/2 hover:bg-blue-700 hover:shadow-lg hover:scale-105 active:scale-95">
                   Tìm kiếm
                 </button>
               </div>
@@ -148,14 +157,14 @@ export default function LandingPage() {
               <div className="flex flex-wrap gap-4">
                 <Link
                   href="/courses"
-                  className="flex items-center gap-2 px-8 py-4 font-semibold text-white transition-all bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl hover:shadow-xl"
+                  className="flex items-center gap-2 px-8 py-4 font-semibold text-white transition-all bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl hover:shadow-xl hover:scale-105 active:scale-95 group"
                 >
                   Khám phá khóa học
-                  <ArrowRight className="w-5 h-5" />
+                  <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
                 </Link>
                 <Link
                   href="/about"
-                  className="px-8 py-4 font-semibold text-gray-700 transition-all border-2 border-gray-300 rounded-xl hover:border-blue-600 hover:text-blue-600"
+                  className="px-8 py-4 font-semibold text-gray-700 transition-all border-2 border-gray-300 rounded-xl hover:border-blue-600 hover:text-blue-600 hover:shadow-lg hover:scale-105 active:scale-95"
                 >
                   Tìm hiểu thêm
                 </Link>
@@ -163,7 +172,7 @@ export default function LandingPage() {
 
               {/* Trust Badges */}
               <div className="flex items-center gap-6 pt-4">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 animate-fade-in" style={{ animationDelay: '0.3s' }}>
                   <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
                   <span className="font-semibold">4.8/5</span>
                   <span className="text-gray-500">(12,547 đánh giá)</span>
@@ -172,8 +181,8 @@ export default function LandingPage() {
             </div>
 
             {/* Right Image */}
-            <div className="relative hidden lg:block">
-              <div className="relative z-10">
+            <div className={`relative hidden lg:block ${mounted ? 'animate-fade-in-right' : 'opacity-0'}`}>
+              <div className="relative z-10 transition-transform duration-500 hover:scale-105">
                 <img
                   src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800"
                   alt="Students learning"
@@ -181,8 +190,8 @@ export default function LandingPage() {
                 />
               </div>
               {/* Decorative elements */}
-              <div className="absolute bg-purple-300 rounded-full -top-4 -right-4 w-72 h-72 blur-3xl opacity-20"></div>
-              <div className="absolute bg-blue-300 rounded-full -bottom-4 -left-4 w-72 h-72 blur-3xl opacity-20"></div>
+              <div className="absolute bg-purple-300 rounded-full -top-4 -right-4 w-72 h-72 blur-3xl opacity-20 animate-pulse-slow"></div>
+              <div className="absolute bg-blue-300 rounded-full -bottom-4 -left-4 w-72 h-72 blur-3xl opacity-20 animate-pulse-slow" style={{ animationDelay: '1s' }}></div>
             </div>
           </div>
         </div>
@@ -195,11 +204,15 @@ export default function LandingPage() {
             {stats.map((stat, index) => {
               const Icon = stat.icon;
               return (
-                <div key={index} className="text-center">
-                  <div className="inline-flex items-center justify-center w-16 h-16 mb-4 bg-blue-100 rounded-full">
-                    <Icon className="w-8 h-8 text-blue-600" />
+                <div 
+                  key={index} 
+                  className="text-center group animate-fade-in-up"
+                  style={{ animationDelay: `${index * 0.1}s` }}
+                >
+                  <div className="inline-flex items-center justify-center w-16 h-16 mb-4 transition-all bg-blue-100 rounded-full group-hover:bg-blue-600 group-hover:scale-110 group-hover:rotate-6">
+                    <Icon className="w-8 h-8 text-blue-600 transition-colors group-hover:text-white" />
                   </div>
-                  <div className="mb-1 text-3xl font-bold text-gray-900">
+                  <div className="mb-1 text-3xl font-bold text-gray-900 transition-transform group-hover:scale-110">
                     {stat.value}
                   </div>
                   <div className="text-gray-600">{stat.label}</div>
@@ -213,7 +226,7 @@ export default function LandingPage() {
       {/* Categories Section */}
       <section className="py-20 bg-gray-50">
         <div className="container px-4 mx-auto">
-          <div className="mb-12 text-center">
+          <div className="mb-12 text-center animate-fade-in-up">
             <h2 className="mb-4 text-4xl font-bold text-gray-900">
               Khám phá theo danh mục
             </h2>
@@ -227,12 +240,13 @@ export default function LandingPage() {
               <Link
                 key={index}
                 href={`/courses?category=${category.name}`}
-                className="p-6 text-center transition-all bg-white border-2 border-gray-200 rounded-xl hover:border-blue-500 hover:shadow-lg group"
+                className="p-6 text-center transition-all bg-white border-2 border-gray-200 rounded-xl hover:border-blue-500 hover:shadow-lg group animate-fade-in-up hover:-translate-y-2"
+                style={{ animationDelay: `${index * 0.1}s` }}
               >
-                <div className="mb-3 text-4xl transition-transform group-hover:scale-110">
+                <div className="mb-3 text-4xl transition-transform group-hover:scale-125 group-hover:rotate-12">
                   {category.icon}
                 </div>
-                <div className="mb-1 font-semibold text-gray-900">
+                <div className="mb-1 font-semibold text-gray-900 transition-colors group-hover:text-blue-600">
                   {category.name}
                 </div>
                 <div className="text-sm text-gray-500">
@@ -247,7 +261,7 @@ export default function LandingPage() {
       {/* Featured Courses */}
       <section className="py-20 bg-white">
         <div className="container px-4 mx-auto">
-          <div className="flex items-center justify-between mb-12">
+          <div className="flex items-center justify-between mb-12 animate-fade-in-up">
             <div>
               <h2 className="mb-4 text-4xl font-bold text-gray-900">
                 Khóa học nổi bật
@@ -258,28 +272,30 @@ export default function LandingPage() {
             </div>
             <Link
               href="/courses"
-              className="flex items-center gap-2 px-6 py-3 font-semibold text-blue-600 hover:text-blue-700"
+              className="flex items-center gap-2 px-6 py-3 font-semibold text-blue-600 hover:text-blue-700 group"
             >
               Xem tất cả
-              <ArrowRight className="w-5 h-5" />
+              <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
             </Link>
           </div>
 
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
-            {featuredCourses.map((course) => (
+            {featuredCourses.map((course, index) => (
               <Link
                 key={course.id}
                 href={`/courses/${course.id}`}
-                className="group"
+                className="group animate-fade-in-up"
+                style={{ animationDelay: `${index * 0.1}s` }}
               >
-                <div className="overflow-hidden transition-all bg-white border-2 border-gray-200 rounded-xl hover:border-blue-500 hover:shadow-xl">
+                <div className="overflow-hidden transition-all bg-white border-2 border-gray-200 rounded-xl hover:border-blue-500 hover:shadow-2xl hover:-translate-y-2">
                   {/* Thumbnail */}
                   <div className="relative h-48 overflow-hidden">
                     <img
                       src={course.thumbnail}
                       alt={course.title}
-                      className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
+                      className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-125 group-hover:rotate-2"
                     />
+                    <div className="absolute inset-0 transition-opacity opacity-0 bg-gradient-to-t from-black/50 to-transparent group-hover:opacity-100"></div>
                     <div className="absolute px-3 py-1 text-sm font-semibold rounded-full top-3 right-3 bg-white/90 backdrop-blur-sm">
                       {course.level}
                     </div>
@@ -330,7 +346,7 @@ export default function LandingPage() {
       {/* Features Section */}
       <section className="py-20 text-white bg-gradient-to-br from-blue-600 to-purple-600">
         <div className="container px-4 mx-auto">
-          <div className="mb-16 text-center">
+          <div className="mb-16 text-center animate-fade-in-up">
             <h2 className="mb-4 text-4xl font-bold">
               Tại sao chọn LearnHub?
             </h2>
@@ -345,9 +361,10 @@ export default function LandingPage() {
               return (
                 <div
                   key={index}
-                  className="p-6 transition-all border bg-white/10 backdrop-blur-sm rounded-xl border-white/20 hover:bg-white/20"
+                  className="p-6 transition-all border bg-white/10 backdrop-blur-sm rounded-xl border-white/20 hover:bg-white/20 hover:scale-105 hover:-translate-y-2 animate-fade-in-up"
+                  style={{ animationDelay: `${index * 0.1}s` }}
                 >
-                  <Icon className="w-12 h-12 mb-4" />
+                  <Icon className="w-12 h-12 mb-4 transition-transform hover:scale-125 hover:rotate-12" />
                   <h3 className="mb-2 text-xl font-bold">{feature.title}</h3>
                   <p className="text-blue-100">{feature.description}</p>
                 </div>
@@ -360,7 +377,7 @@ export default function LandingPage() {
       {/* CTA Section */}
       <section className="py-20 bg-white">
         <div className="container px-4 mx-auto">
-          <div className="max-w-4xl mx-auto text-center">
+          <div className="max-w-4xl mx-auto text-center animate-fade-in-up">
             <h2 className="mb-6 text-4xl font-bold text-gray-900 md:text-5xl">
               Sẵn sàng bắt đầu hành trình học tập?
             </h2>
@@ -369,14 +386,91 @@ export default function LandingPage() {
             </p>
             <Link
               href="/register"
-              className="inline-flex items-center gap-2 px-8 py-4 text-lg font-semibold text-white transition-all bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl hover:shadow-xl"
+              className="inline-flex items-center gap-2 px-8 py-4 text-lg font-semibold text-white transition-all bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl hover:shadow-xl hover:scale-105 active:scale-95 group"
             >
               Đăng ký miễn phí ngay
-              <ArrowRight className="w-6 h-6" />
+              <ArrowRight className="w-6 h-6 transition-transform group-hover:translate-x-1" />
             </Link>
           </div>
         </div>
       </section>
+
+      <style jsx>{`
+        @keyframes fade-in-up {
+          from {
+            opacity: 0;
+            transform: translateY(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes fade-in-right {
+          from {
+            opacity: 0;
+            transform: translateX(30px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+
+        @keyframes bounce-subtle {
+          0%, 100% {
+            transform: translateY(0);
+          }
+          50% {
+            transform: translateY(-5px);
+          }
+        }
+
+        @keyframes pulse-slow {
+          0%, 100% {
+            opacity: 0.2;
+          }
+          50% {
+            opacity: 0.3;
+          }
+        }
+
+        @keyframes gradient {
+          0%, 100% {
+            background-position: 0% 50%;
+          }
+          50% {
+            background-position: 100% 50%;
+          }
+        }
+
+        .animate-fade-in-up {
+          animation: fade-in-up 0.6s ease-out forwards;
+        }
+
+        .animate-fade-in-right {
+          animation: fade-in-right 0.8s ease-out forwards;
+        }
+
+        .animate-bounce-subtle {
+          animation: bounce-subtle 2s ease-in-out infinite;
+        }
+
+        .animate-pulse-slow {
+          animation: pulse-slow 4s ease-in-out infinite;
+        }
+
+        .animate-gradient {
+          background-size: 200% 200%;
+          animation: gradient 3s ease infinite;
+        }
+
+        .animate-fade-in {
+          animation: fade-in-up 0.6s ease-out forwards;
+          opacity: 0;
+        }
+      `}</style>
     </div>
   );
 }
