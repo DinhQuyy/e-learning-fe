@@ -17,7 +17,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 
-// Mock data - trong thực tế sẽ fetch từ API dựa vào params.id
+// Mock data (giữ nguyên từ code gốc)
 const courseData = {
   id: 1,
   title: 'Complete Web Development Bootcamp 2024',
@@ -45,17 +45,7 @@ const courseData = {
   lastUpdated: 'Tháng 1, 2024',
   bestseller: true,
   
-  description: `
-    Khóa học Web Development toàn diện nhất dành cho người mới bắt đầu. 
-    Bạn sẽ học từ HTML/CSS cơ bản đến xây dựng ứng dụng Full-Stack hoàn chỉnh với React và Node.js.
-    
-    Sau khóa học này, bạn sẽ có thể:
-    - Xây dựng website responsive đẹp mắt
-    - Làm việc với JavaScript hiện đại (ES6+)
-    - Phát triển ứng dụng với React
-    - Xây dựng API với Node.js và Express
-    - Làm việc với Database (MongoDB, SQL)
-  `,
+  description: `Khóa học Web Development toàn diện nhất dành cho người mới bắt đầu. Bạn sẽ học từ HTML/CSS cơ bản đến xây dựng ứng dụng Full-Stack hoàn chỉnh với React và Node.js.`,
   
   whatYouLearn: [
     'HTML5 và CSS3 từ cơ bản đến nâng cao',
@@ -112,39 +102,6 @@ const courseData = {
         { title: 'CSS Grid', duration: '22:00', free: false },
       ],
     },
-    {
-      title: 'JavaScript Basics',
-      lessons: 40,
-      duration: '6 giờ',
-      items: [
-        { title: 'Variables và Data Types', duration: '18:00', free: false },
-        { title: 'Functions', duration: '22:00', free: false },
-        { title: 'Objects và Arrays', duration: '25:00', free: false },
-        { title: 'DOM Manipulation', duration: '30:00', free: false },
-      ],
-    },
-    {
-      title: 'React Development',
-      lessons: 50,
-      duration: '8 giờ',
-      items: [
-        { title: 'React Components', duration: '25:00', free: false },
-        { title: 'State và Props', duration: '30:00', free: false },
-        { title: 'Hooks', duration: '35:00', free: false },
-        { title: 'Context API', duration: '28:00', free: false },
-      ],
-    },
-    {
-      title: 'Backend với Node.js',
-      lessons: 45,
-      duration: '7 giờ',
-      items: [
-        { title: 'Node.js Introduction', duration: '20:00', free: false },
-        { title: 'Express.js Basics', duration: '30:00', free: false },
-        { title: 'RESTful APIs', duration: '35:00', free: false },
-        { title: 'Database Integration', duration: '40:00', free: false },
-      ],
-    },
   ],
   
   reviews: [
@@ -177,6 +134,7 @@ const courseData = {
 
 export default function CourseDetailPage() {
   const [expandedSection, setExpandedSection] = useState<number | null>(0);
+  const [isLiked, setIsLiked] = useState(false);
 
   const discount = Math.round(
     ((courseData.originalPrice - courseData.price) / courseData.originalPrice) * 100
@@ -189,12 +147,12 @@ export default function CourseDetailPage() {
         <div className="container px-4 py-12 mx-auto">
           <div className="grid gap-8 lg:grid-cols-3">
             {/* Left Content */}
-            <div className="space-y-6 lg:col-span-2">
+            <div className="space-y-6 lg:col-span-2 animate-fade-in-up">
               {/* Breadcrumb */}
               <div className="flex items-center gap-2 text-sm text-gray-400">
-                <Link href="/" className="hover:text-white">Home</Link>
+                <Link href="/" className="transition-colors hover:text-white">Home</Link>
                 <span>/</span>
-                <Link href="/courses" className="hover:text-white">Courses</Link>
+                <Link href="/courses" className="transition-colors hover:text-white">Courses</Link>
                 <span>/</span>
                 <span className="text-white">{courseData.category}</span>
               </div>
@@ -202,7 +160,7 @@ export default function CourseDetailPage() {
               {/* Badges */}
               <div className="flex flex-wrap items-center gap-3">
                 {courseData.bestseller && (
-                  <span className="px-3 py-1 text-sm font-bold text-yellow-900 bg-yellow-400 rounded-full">
+                  <span className="px-3 py-1 text-sm font-bold text-yellow-900 bg-yellow-400 rounded-full animate-pulse-subtle">
                     Bestseller
                   </span>
                 )}
@@ -225,37 +183,37 @@ export default function CourseDetailPage() {
 
               {/* Stats */}
               <div className="flex flex-wrap items-center gap-6 text-sm">
-                <div className="flex items-center gap-2">
-                  <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
+                <div className="flex items-center gap-2 group">
+                  <Star className="w-5 h-5 text-yellow-400 transition-transform fill-yellow-400 group-hover:scale-125" />
                   <span className="font-bold">{courseData.rating}</span>
                   <span className="text-gray-400">
                     ({courseData.reviewCount.toLocaleString()} đánh giá)
                   </span>
                 </div>
-                <div className="flex items-center gap-2 text-gray-400">
-                  <Users className="w-5 h-5" />
+                <div className="flex items-center gap-2 text-gray-400 group">
+                  <Users className="w-5 h-5 transition-transform group-hover:scale-125" />
                   <span>{courseData.students.toLocaleString()} học viên</span>
                 </div>
-                <div className="flex items-center gap-2 text-gray-400">
-                  <Clock className="w-5 h-5" />
+                <div className="flex items-center gap-2 text-gray-400 group">
+                  <Clock className="w-5 h-5 transition-transform group-hover:scale-125" />
                   <span>{courseData.duration}</span>
                 </div>
-                <div className="flex items-center gap-2 text-gray-400">
-                  <Globe className="w-5 h-5" />
+                <div className="flex items-center gap-2 text-gray-400 group">
+                  <Globe className="w-5 h-5 transition-transform group-hover:scale-125" />
                   <span>{courseData.language}</span>
                 </div>
               </div>
 
               {/* Instructor */}
-              <div className="flex items-center gap-4">
+              <div className="flex items-center gap-4 group">
                 <img
                   src={courseData.instructor.avatar}
                   alt={courseData.instructor.name}
-                  className="w-12 h-12 rounded-full"
+                  className="w-12 h-12 transition-transform rounded-full group-hover:scale-110 group-hover:rotate-6"
                 />
                 <div>
                   <div className="text-sm text-gray-400">Giảng viên</div>
-                  <div className="font-semibold">{courseData.instructor.name}</div>
+                  <div className="font-semibold transition-colors group-hover:text-blue-400">{courseData.instructor.name}</div>
                 </div>
               </div>
 
@@ -266,16 +224,16 @@ export default function CourseDetailPage() {
 
             {/* Right Card - Desktop */}
             <div className="hidden lg:block">
-              <div className="sticky overflow-hidden bg-white shadow-2xl rounded-xl top-8">
+              <div className="sticky overflow-hidden bg-white shadow-2xl rounded-xl top-8 animate-fade-in-right">
                 {/* Preview */}
-                <div className="relative aspect-video">
+                <div className="relative aspect-video group">
                   <img
                     src={courseData.thumbnail}
                     alt={courseData.title}
-                    className="object-cover w-full h-full"
+                    className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-110"
                   />
                   <button className="absolute inset-0 flex items-center justify-center transition-colors bg-black/50 hover:bg-black/40 group">
-                    <div className="flex items-center justify-center w-16 h-16 transition-transform bg-white rounded-full group-hover:scale-110">
+                    <div className="flex items-center justify-center w-16 h-16 transition-all bg-white rounded-full group-hover:scale-125 group-hover:rotate-12">
                       <PlayCircle className="w-8 h-8 text-blue-600" />
                     </div>
                   </button>
@@ -295,11 +253,11 @@ export default function CourseDetailPage() {
                     </div>
                   </div>
 
-                  <button className="w-full py-4 text-lg font-bold text-white transition-all rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:shadow-xl">
+                  <button className="w-full py-4 text-lg font-bold text-white transition-all rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:shadow-xl hover:scale-105 active:scale-95">
                     Đăng ký học ngay
                   </button>
 
-                  <button className="w-full py-3 font-semibold text-gray-700 transition-all border-2 border-gray-300 rounded-lg hover:border-blue-600 hover:text-blue-600">
+                  <button className="w-full py-3 font-semibold text-gray-700 transition-all border-2 border-gray-300 rounded-lg hover:border-blue-600 hover:text-blue-600 hover:scale-105 active:scale-95">
                     Thêm vào giỏ hàng
                   </button>
 
@@ -310,30 +268,35 @@ export default function CourseDetailPage() {
                   <div className="pt-4 space-y-3 text-sm border-t">
                     <div className="font-semibold">Khóa học bao gồm:</div>
                     <div className="space-y-2 text-gray-600">
-                      <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4" />
+                      <div className="flex items-center gap-2 group">
+                        <Clock className="w-4 h-4 transition-all group-hover:text-blue-600 group-hover:scale-125" />
                         {courseData.duration} video
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Download className="w-4 h-4" />
+                      <div className="flex items-center gap-2 group">
+                        <Download className="w-4 h-4 transition-all group-hover:text-blue-600 group-hover:scale-125" />
                         Tài liệu tải xuống
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Award className="w-4 h-4" />
+                      <div className="flex items-center gap-2 group">
+                        <Award className="w-4 h-4 transition-all group-hover:text-blue-600 group-hover:scale-125" />
                         Chứng chỉ hoàn thành
                       </div>
-                      <div className="flex items-center gap-2">
-                        <Globe className="w-4 h-4" />
+                      <div className="flex items-center gap-2 group">
+                        <Globe className="w-4 h-4 transition-all group-hover:text-blue-600 group-hover:scale-125" />
                         Truy cập trọn đời
                       </div>
                     </div>
                   </div>
 
                   <div className="flex gap-2 pt-2">
-                    <button className="flex-1 py-2 transition-colors border border-gray-300 rounded-lg hover:bg-gray-50">
-                      <Heart className="w-5 h-5 mx-auto" />
+                    <button 
+                      onClick={() => setIsLiked(!isLiked)}
+                      className={`flex-1 py-2 transition-all border border-gray-300 rounded-lg hover:bg-gray-50 hover:scale-105 ${
+                        isLiked ? 'bg-red-50 border-red-300' : ''
+                      }`}
+                    >
+                      <Heart className={`w-5 h-5 mx-auto transition-all ${isLiked ? 'fill-red-500 text-red-500 scale-125' : ''}`} />
                     </button>
-                    <button className="flex-1 py-2 transition-colors border border-gray-300 rounded-lg hover:bg-gray-50">
+                    <button className="flex-1 py-2 transition-all border border-gray-300 rounded-lg hover:bg-gray-50 hover:scale-105">
                       <Share2 className="w-5 h-5 mx-auto" />
                     </button>
                   </div>
@@ -345,7 +308,7 @@ export default function CourseDetailPage() {
       </div>
 
       {/* Mobile CTA Bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-50 p-4 bg-white border-t shadow-lg lg:hidden">
+      <div className="fixed bottom-0 left-0 right-0 z-50 p-4 bg-white border-t shadow-lg lg:hidden animate-slide-up">
         <div className="flex items-center gap-4">
           <div>
             <div className="text-2xl font-bold text-gray-900">
@@ -355,7 +318,7 @@ export default function CourseDetailPage() {
               ₫{courseData.originalPrice.toLocaleString()}
             </div>
           </div>
-          <button className="flex-1 py-3 font-bold text-white rounded-lg bg-gradient-to-r from-blue-600 to-purple-600">
+          <button className="flex-1 py-3 font-bold text-white transition-all rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:shadow-xl active:scale-95">
             Đăng ký ngay
           </button>
         </div>
@@ -366,13 +329,17 @@ export default function CourseDetailPage() {
         <div className="grid gap-8 lg:grid-cols-3">
           <div className="space-y-12 lg:col-span-2">
             {/* What You'll Learn */}
-            <section className="p-8 bg-white rounded-xl">
+            <section className="p-8 bg-white border border-gray-200 shadow-sm rounded-xl animate-fade-in-up">
               <h2 className="mb-6 text-2xl font-bold text-gray-900">
                 Bạn sẽ học được gì
               </h2>
               <div className="grid gap-4 md:grid-cols-2">
                 {courseData.whatYouLearn.map((item, index) => (
-                  <div key={index} className="flex items-start gap-3">
+                  <div 
+                    key={index} 
+                    className="flex items-start gap-3 animate-fade-in"
+                    style={{ animationDelay: `${index * 0.05}s` }}
+                  >
                     <CheckCircle2 className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
                     <span className="text-gray-700">{item}</span>
                   </div>
@@ -381,7 +348,7 @@ export default function CourseDetailPage() {
             </section>
 
             {/* Course Content */}
-            <section className="p-8 bg-white rounded-xl">
+            <section className="p-8 bg-white border border-gray-200 shadow-sm rounded-xl animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
               <h2 className="mb-6 text-2xl font-bold text-gray-900">
                 Nội dung khóa học
               </h2>
@@ -391,7 +358,7 @@ export default function CourseDetailPage() {
               </div>
               <div className="space-y-2">
                 {courseData.curriculum.map((section, index) => (
-                  <div key={index} className="border rounded-lg">
+                  <div key={index} className="overflow-hidden transition-all border rounded-lg hover:border-blue-500">
                     <button
                       onClick={() =>
                         setExpandedSection(expandedSection === index ? null : index)
@@ -400,7 +367,7 @@ export default function CourseDetailPage() {
                     >
                       <div className="flex items-center gap-4 text-left">
                         <ChevronDown
-                          className={`w-5 h-5 transition-transform ${
+                          className={`w-5 h-5 transition-transform duration-300 ${
                             expandedSection === index ? 'rotate-180' : ''
                           }`}
                         />
@@ -416,21 +383,21 @@ export default function CourseDetailPage() {
                     </button>
 
                     {expandedSection === index && (
-                      <div className="px-6 pb-4 space-y-2">
+                      <div className="px-6 pb-4 space-y-2 animate-slide-down">
                         {section.items.map((item, itemIndex) => (
                           <div
                             key={itemIndex}
-                            className="flex items-center justify-between px-4 py-2 rounded hover:bg-gray-50"
+                            className="flex items-center justify-between px-4 py-2 transition-colors rounded hover:bg-gray-50 group"
                           >
                             <div className="flex items-center gap-3">
-                              <PlayCircle className="w-4 h-4 text-gray-400" />
-                              <span className="text-sm text-gray-700">
+                              <PlayCircle className="w-4 h-4 text-gray-400 transition-all group-hover:text-blue-600 group-hover:scale-125" />
+                              <span className="text-sm text-gray-700 transition-colors group-hover:text-blue-600">
                                 {item.title}
                               </span>
                             </div>
                             <div className="flex items-center gap-3">
                               {item.free && (
-                                <span className="text-xs font-semibold text-blue-600">
+                                <span className="text-xs font-semibold text-blue-600 cursor-pointer hover:underline">
                                   Xem trước
                                 </span>
                               )}
@@ -448,13 +415,13 @@ export default function CourseDetailPage() {
             </section>
 
             {/* Requirements */}
-            <section className="p-8 bg-white rounded-xl">
+            <section className="p-8 bg-white border border-gray-200 shadow-sm rounded-xl animate-fade-in-up" style={{ animationDelay: '0.2s' }}>
               <h2 className="mb-6 text-2xl font-bold text-gray-900">
                 Yêu cầu
               </h2>
               <ul className="space-y-3">
                 {courseData.requirements.map((req, index) => (
-                  <li key={index} className="flex items-start gap-3">
+                  <li key={index} className="flex items-start gap-3 animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
                     <div className="w-2 h-2 mt-2 bg-gray-400 rounded-full"></div>
                     <span className="text-gray-700">{req}</span>
                   </li>
@@ -463,7 +430,7 @@ export default function CourseDetailPage() {
             </section>
 
             {/* Description */}
-            <section className="p-8 bg-white rounded-xl">
+            <section className="p-8 bg-white border border-gray-200 shadow-sm rounded-xl animate-fade-in-up" style={{ animationDelay: '0.3s' }}>
               <h2 className="mb-6 text-2xl font-bold text-gray-900">
                 Mô tả
               </h2>
@@ -473,15 +440,15 @@ export default function CourseDetailPage() {
             </section>
 
             {/* Instructor */}
-            <section className="p-8 bg-white rounded-xl">
+            <section className="p-8 bg-white border border-gray-200 shadow-sm rounded-xl animate-fade-in-up" style={{ animationDelay: '0.4s' }}>
               <h2 className="mb-6 text-2xl font-bold text-gray-900">
                 Giảng viên
               </h2>
-              <div className="flex items-start gap-6">
+              <div className="flex items-start gap-6 group">
                 <img
                   src={courseData.instructor.avatar}
                   alt={courseData.instructor.name}
-                  className="w-24 h-24 rounded-full"
+                  className="w-24 h-24 transition-transform rounded-full group-hover:scale-110 group-hover:rotate-6"
                 />
                 <div className="flex-1 space-y-3">
                   <h3 className="text-xl font-bold">{courseData.instructor.name}</h3>
@@ -505,13 +472,17 @@ export default function CourseDetailPage() {
             </section>
 
             {/* Reviews */}
-            <section className="p-8 bg-white rounded-xl">
+            <section className="p-8 bg-white border border-gray-200 shadow-sm rounded-xl animate-fade-in-up" style={{ animationDelay: '0.5s' }}>
               <h2 className="mb-6 text-2xl font-bold text-gray-900">
                 Đánh giá từ học viên
               </h2>
               <div className="space-y-6">
-                {courseData.reviews.map((review) => (
-                  <div key={review.id} className="pb-6 border-b last:border-0">
+                {courseData.reviews.map((review, index) => (
+                  <div 
+                    key={review.id} 
+                    className="pb-6 border-b last:border-0 animate-fade-in"
+                    style={{ animationDelay: `${index * 0.1}s` }}
+                  >
                     <div className="flex items-start gap-4">
                       <img
                         src={review.avatar}
@@ -546,6 +517,86 @@ export default function CourseDetailPage() {
           </div>
         </div>
       </div>
+
+      <style jsx>{`
+        @keyframes fade-in-up {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes fade-in-right {
+          from {
+            opacity: 0;
+            transform: translateX(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+
+        @keyframes fade-in {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
+        @keyframes slide-down {
+          from {
+            opacity: 0;
+            max-height: 0;
+          }
+          to {
+            opacity: 1;
+            max-height: 500px;
+          }
+        }
+
+        @keyframes slide-up {
+          from {
+            transform: translateY(100%);
+          }
+          to {
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes pulse-subtle {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.85; }
+        }
+
+        .animate-fade-in-up {
+          animation: fade-in-up 0.6s ease-out forwards;
+          opacity: 0;
+        }
+
+        .animate-fade-in-right {
+          animation: fade-in-right 0.8s ease-out forwards;
+        }
+
+        .animate-fade-in {
+          animation: fade-in 0.4s ease-out forwards;
+          opacity: 0;
+        }
+
+        .animate-slide-down {
+          animation: slide-down 0.3s ease-out forwards;
+        }
+
+        .animate-slide-up {
+          animation: slide-up 0.3s ease-out forwards;
+        }
+
+        .animate-pulse-subtle {
+          animation: pulse-subtle 2s ease-in-out infinite;
+        }
+      `}</style>
     </div>
   );
 }
