@@ -719,7 +719,7 @@ function CourseModal({
   };
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-      <div className="w-full max-w-2xl bg-white rounded-lg shadow-xl overflow-hidden">
+      <div className="flex w-full max-w-2xl max-h-[calc(100vh-2rem)] flex-col overflow-hidden rounded-lg bg-white shadow-xl">
         <div className="flex items-center justify-between p-5 border-b">
           <h2 className="text-lg font-bold">{title}</h2>
           <button onClick={onClose} className="p-2 rounded hover:bg-gray-100">
@@ -729,7 +729,7 @@ function CourseModal({
 
         {/* VIEW MODE */}
         {isView ? (
-          <div className="p-6 space-y-3">
+          <div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-3">
             <div className="text-sm">
               <div className="font-semibold text-gray-900">{course?.title ?? '—'}</div>
               <div className="text-gray-600 mt-1">Giá: ₫{Number(course?.price ?? 0).toLocaleString('vi-VN')}</div>
@@ -758,7 +758,7 @@ function CourseModal({
         ) : (
           // CREATE / EDIT
           <form
-            className="p-6 space-y-4"
+            className="flex-1 min-h-0 overflow-y-auto p-6 space-y-4"
             onSubmit={(e) => {
               e.preventDefault();
               mode === 'create' ? onCreate() : onUpdate();

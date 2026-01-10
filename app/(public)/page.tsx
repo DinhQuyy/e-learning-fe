@@ -1,5 +1,7 @@
+'use client';
+
 import Link from 'next/link';
-import { 
+import {
   GraduationCap, 
   BookOpen, 
   Users, 
@@ -14,6 +16,7 @@ import {
   CheckCircle2
 } from 'lucide-react';
 import HeroCourseSearch from '@/components/public/HeroCourseSearch';
+import { usePublicSettings } from '@/lib/public-settings.client';
 
 // Mock data
 const featuredCourses = [
@@ -76,39 +79,40 @@ const categories = [
   { name: 'Photography', icon: '📷', courses: 134 },
 ];
 
-const stats = [
-  { icon: Users, label: 'Học viên', value: '50,000+' },
-  { icon: BookOpen, label: 'Khóa học', value: '1,200+' },
-  { icon: GraduationCap, label: 'Giảng viên', value: '500+' },
-  { icon: Award, label: 'Chứng chỉ', value: '30,000+' },
-];
-
-const features = [
-  {
-    icon: PlayCircle,
-    title: 'Video chất lượng cao',
-    description: 'Học từ video Full HD với âm thanh rõ ràng',
-  },
-  {
-    icon: Target,
-    title: 'Lộ trình học tập',
-    description: 'Hệ thống học theo lộ trình từ cơ bản đến nâng cao',
-  },
-  {
-    icon: Zap,
-    title: 'Học mọi lúc mọi nơi',
-    description: 'Truy cập trên mọi thiết bị, học theo tốc độ của bạn',
-  },
-  {
-    icon: Award,
-    title: 'Chứng chỉ uy tín',
-    description: 'Nhận chứng chỉ được công nhận sau khi hoàn thành',
-  },
-];
+const statIcons = [Users, BookOpen, GraduationCap, Award];
+const featureIcons = [PlayCircle, Target, Zap, Award];
+const formatNumber = (value: number) =>
+  new Intl.NumberFormat('vi-VN').format(value);
 
 export default function LandingPage() {
+  const { settings: publicSettings } = usePublicSettings();
+  const heroBadge = publicSettings.heroBadge || publicSettings.siteName;
+
+  if (publicSettings.maintenance) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-50 px-6 py-16">
+        <div className="max-w-xl text-center">
+          <h1 className="text-3xl font-bold text-gray-900 md:text-4xl">
+            {publicSettings.siteName}
+          </h1>
+          <p className="mt-4 text-lg text-gray-600">
+            We are in maintenance mode. Please check back soon.
+          </p>
+          <p className="mt-2 text-sm text-gray-500">
+            {publicSettings.siteDescription}
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-white">
+      {publicSettings.announcementEnabled && publicSettings.announcementText ? (
+        <div className="bg-blue-600 px-4 py-3 text-center text-sm font-medium text-white">
+          {publicSettings.announcementText}
+        </div>
+      ) : null}
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-purple-50">
         <div className="container px-4 py-20 mx-auto md:py-32">
@@ -116,41 +120,42 @@ export default function LandingPage() {
             {/* Left Content */}
             <div className="space-y-8">
               <div className="inline-block px-4 py-2 text-sm font-semibold text-blue-700 bg-blue-100 rounded-full">
-                🎉 Hơn 50,000 học viên đã tin tưởng
+                {heroBadge}
               </div>
               
               <h1 className="text-5xl font-bold leading-tight text-gray-900 md:text-6xl">
-                Học tập không giới hạn,
-                <span className="text-transparent bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text">
-                  {' '}Phát triển mỗi ngày
-                </span>
+                {publicSettings.heroTitle}
+                {publicSettings.heroHighlight ? (
+                  <span className="text-transparent bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text">
+                    {' '}{publicSettings.heroHighlight}
+                  </span>
+                ) : null}
               </h1>
 
               <p className="text-xl leading-relaxed text-gray-600">
-                Nền tảng học trực tuyến hàng đầu với hơn 1,200 khóa học chất lượng cao. 
-                Học từ các chuyên gia hàng đầu, nhận chứng chỉ uy tín.
+                {publicSettings.heroSubtitle}
               </p>
 
               {/* Search Bar */}
               <HeroCourseSearch
-                placeholder="Tìm kiếm khóa học..."
-                buttonLabel="Tìm kiếm"
+                placeholder={publicSettings.searchPlaceholder}
+                buttonLabel={publicSettings.searchButtonLabel}
               />
 
               {/* CTA Buttons */}
               <div className="flex flex-wrap gap-4">
                 <Link
-                  href="/courses"
+                  href={publicSettings.heroPrimaryCtaHref}
                   className="flex items-center gap-2 px-8 py-4 font-semibold text-white transition-all bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl hover:shadow-xl"
                 >
-                  Khám phá khóa học
+                  {publicSettings.heroPrimaryCtaLabel}
                   <ArrowRight className="w-5 h-5" />
                 </Link>
                 <Link
-                  href="/about"
+                  href={publicSettings.heroSecondaryCtaHref}
                   className="px-8 py-4 font-semibold text-gray-700 transition-all border-2 border-gray-300 rounded-xl hover:border-blue-600 hover:text-blue-600"
                 >
-                  Tìm hiểu thêm
+                  {publicSettings.heroSecondaryCtaLabel}
                 </Link>
               </div>
 
@@ -168,8 +173,8 @@ export default function LandingPage() {
             <div className="relative hidden lg:block">
               <div className="relative z-10">
                 <img
-                  src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800"
-                  alt="Students learning"
+                  src={publicSettings.heroImageUrl}
+                  alt={publicSettings.siteName}
                   className="shadow-2xl rounded-2xl"
                 />
               </div>
@@ -182,36 +187,39 @@ export default function LandingPage() {
       </section>
 
       {/* Stats Section */}
-      <section className="py-12 bg-white border-y">
-        <div className="container px-4 mx-auto">
-          <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
-            {stats.map((stat, index) => {
-              const Icon = stat.icon;
-              return (
-                <div key={index} className="text-center">
-                  <div className="inline-flex items-center justify-center w-16 h-16 mb-4 bg-blue-100 rounded-full">
-                    <Icon className="w-8 h-8 text-blue-600" />
+      {publicSettings.showStats ? (
+        <section className="py-12 bg-white border-y">
+          <div className="container px-4 mx-auto">
+            <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
+              {publicSettings.stats.map((stat, index) => {
+                const Icon = statIcons[index] ?? Users;
+                return (
+                  <div key={index} className="text-center">
+                    <div className="inline-flex items-center justify-center w-16 h-16 mb-4 bg-blue-100 rounded-full">
+                      <Icon className="w-8 h-8 text-blue-600" />
+                    </div>
+                    <div className="mb-1 text-3xl font-bold text-gray-900">
+                      {stat.value}
+                    </div>
+                    <div className="text-gray-600">{stat.label}</div>
                   </div>
-                  <div className="mb-1 text-3xl font-bold text-gray-900">
-                    {stat.value}
-                  </div>
-                  <div className="text-gray-600">{stat.label}</div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      ) : null}
 
       {/* Categories Section */}
-      <section className="py-20 bg-gray-50">
+      {publicSettings.showCategories ? (
+        <section className="py-20 bg-gray-50">
         <div className="container px-4 mx-auto">
           <div className="mb-12 text-center">
             <h2 className="mb-4 text-4xl font-bold text-gray-900">
-              Khám phá theo danh mục
+              {publicSettings.categoriesTitle}
             </h2>
             <p className="text-xl text-gray-600">
-              Hơn 1,200 khóa học đa dạng trong nhiều lĩnh vực
+              {publicSettings.categoriesSubtitle}
             </p>
           </div>
 
@@ -235,25 +243,27 @@ export default function LandingPage() {
             ))}
           </div>
         </div>
-      </section>
+        </section>
+      ) : null}
 
       {/* Featured Courses */}
-      <section className="py-20 bg-white">
+      {publicSettings.showFeaturedCourses ? (
+        <section className="py-20 bg-white">
         <div className="container px-4 mx-auto">
           <div className="flex items-center justify-between mb-12">
             <div>
-              <h2 className="mb-4 text-4xl font-bold text-gray-900">
-                Khóa học nổi bật
+                                        <h2 className="mb-4 text-4xl font-bold text-gray-900">
+                {publicSettings.featuredTitle}
               </h2>
-              <p className="text-xl text-gray-600">
-                Được học viên yêu thích nhất
+                                        <p className="text-xl text-gray-600">
+                {publicSettings.featuredSubtitle}
               </p>
             </div>
             <Link
-              href="/courses"
+              href={publicSettings.featuredCtaHref}
               className="flex items-center gap-2 px-6 py-3 font-semibold text-blue-600 hover:text-blue-700"
             >
-              Xem tất cả
+              {publicSettings.featuredCtaLabel}
               <ArrowRight className="w-5 h-5" />
             </Link>
           </div>
@@ -299,7 +309,7 @@ export default function LandingPage() {
                       </div>
                       <div className="flex items-center gap-1 text-gray-500">
                         <Users className="w-4 h-4" />
-                        <span>{course.students.toLocaleString()}</span>
+                        <span>{formatNumber(course.students)}</span>
                       </div>
                       <div className="flex items-center gap-1 text-gray-500">
                         <Clock className="w-4 h-4" />
@@ -309,7 +319,7 @@ export default function LandingPage() {
 
                     <div className="flex items-center justify-between pt-3 border-t">
                       <div className="text-2xl font-bold text-gray-900">
-                        ₫{course.price.toLocaleString()}
+                        ₫{formatNumber(course.price)}
                       </div>
                     </div>
                   </div>
@@ -318,23 +328,25 @@ export default function LandingPage() {
             ))}
           </div>
         </div>
-      </section>
+        </section>
+      ) : null}
 
       {/* Features Section */}
-      <section className="py-20 text-white bg-gradient-to-br from-blue-600 to-purple-600">
+      {publicSettings.showFeatures ? (
+        <section className="py-20 text-white bg-gradient-to-br from-blue-600 to-purple-600">
         <div className="container px-4 mx-auto">
           <div className="mb-16 text-center">
-            <h2 className="mb-4 text-4xl font-bold">
-              Tại sao chọn LearnHub?
+                        <h2 className="mb-4 text-4xl font-bold">
+              {publicSettings.featuresTitle}
             </h2>
-            <p className="text-xl text-blue-100">
-              Trải nghiệm học tập tốt nhất với các tính năng hiện đại
+                        <p className="text-xl text-blue-100">
+              {publicSettings.featuresSubtitle}
             </p>
           </div>
 
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
-            {features.map((feature, index) => {
-              const Icon = feature.icon;
+            {publicSettings.features.map((feature, index) => {
+              const Icon = featureIcons[index] ?? Award;
               return (
                 <div
                   key={index}
@@ -348,28 +360,36 @@ export default function LandingPage() {
             })}
           </div>
         </div>
-      </section>
+        </section>
+      ) : null}
 
       {/* CTA Section */}
-      <section className="py-20 bg-white">
+      {publicSettings.showCta ? (
+        <section className="py-20 bg-white">
         <div className="container px-4 mx-auto">
           <div className="max-w-4xl mx-auto text-center">
-            <h2 className="mb-6 text-4xl font-bold text-gray-900 md:text-5xl">
-              Sẵn sàng bắt đầu hành trình học tập?
+                        <h2 className="mb-6 text-4xl font-bold text-gray-900 md:text-5xl">
+              {publicSettings.ctaTitle}
             </h2>
-            <p className="mb-8 text-xl text-gray-600">
-              Tham gia cùng hơn 50,000 học viên đang học tập và phát triển mỗi ngày
+                        <p className="mb-8 text-xl text-gray-600">
+              {publicSettings.ctaSubtitle}
             </p>
             <Link
-              href="/register"
+              href={publicSettings.ctaButtonHref}
               className="inline-flex items-center gap-2 px-8 py-4 text-lg font-semibold text-white transition-all bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl hover:shadow-xl"
             >
-              Đăng ký miễn phí ngay
+              {publicSettings.ctaButtonLabel}
               <ArrowRight className="w-6 h-6" />
             </Link>
           </div>
         </div>
-      </section>
+        </section>
+      ) : null}
     </div>
   );
 }
+
+
+
+
+

@@ -13,6 +13,8 @@ import {
   User,
   Award,
   Heart,
+  Eye,
+  EyeOff,
   Settings,
   LogOut,
 } from 'lucide-react';
@@ -79,6 +81,7 @@ const [authMode, setAuthMode] = useState<AuthMode>('login');
 
 const [loginEmail, setLoginEmail] = useState('');
 const [loginPassword, setLoginPassword] = useState('');
+const [showLoginPassword, setShowLoginPassword] = useState(false);
 const [loginRememberMe, setLoginRememberMe] = useState(false);
 const [rememberedAccounts, setRememberedAccounts] = useState<RememberedAccount[]>([]);
 const [loginError, setLoginError] = useState<string | null>(null);
@@ -92,7 +95,9 @@ const [forgotLoading, setForgotLoading] = useState(false);
 const [registerFullName, setRegisterFullName] = useState('');
 const [registerEmail, setRegisterEmail] = useState('');
 const [registerPassword, setRegisterPassword] = useState('');
+const [showRegisterPassword, setShowRegisterPassword] = useState(false);
 const [registerConfirmPassword, setRegisterConfirmPassword] = useState('');
+const [showRegisterConfirmPassword, setShowRegisterConfirmPassword] = useState(false);
 const [registerError, setRegisterError] = useState<string | null>(null);
 const [registerSuccess, setRegisterSuccess] = useState<string | null>(null);
 const [registerLoading, setRegisterLoading] = useState(false);
@@ -166,6 +171,9 @@ const [isLoadingUser, setIsLoadingUser] = useState(true);
     setRegisterSuccess(null);
     setForgotError(null);
     setForgotSuccess(null);
+    setShowLoginPassword(false);
+    setShowRegisterPassword(false);
+    setShowRegisterConfirmPassword(false);
   }, [authMode]);
 
 
@@ -935,14 +943,37 @@ const [isLoadingUser, setIsLoadingUser] = useState(true);
                       <option key={account.email} value={account.email} />
                     ))}
                   </datalist>
-                  <FormInput
-                    label={authCopy.password}
-                    name="login_password"
-                    type="password"
-                    placeholder="********"
-                    value={loginPassword}
-                    onChange={(event) => setLoginPassword(event.target.value)}
-                  />
+                  <div className="mb-4">
+                    <label
+                      htmlFor="login_password"
+                      className="mb-1 block text-sm font-medium text-gray-700"
+                    >
+                      {authCopy.password}
+                    </label>
+                    <div className="relative">
+                      <input
+                        id="login_password"
+                        name="login_password"
+                        type={showLoginPassword ? 'text' : 'password'}
+                        placeholder="********"
+                        value={loginPassword}
+                        onChange={(event) => setLoginPassword(event.target.value)}
+                        className="w-full rounded-md border px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowLoginPassword((prev) => !prev)}
+                        aria-label={showLoginPassword ? 'Hide password' : 'Show password'}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-gray-500 transition hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        {showLoginPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
                   <div className="mt-2 flex items-center justify-between text-sm text-gray-500">
                     <label className="flex items-center gap-2">
                       <input
@@ -1002,22 +1033,70 @@ const [isLoadingUser, setIsLoadingUser] = useState(true);
                     value={registerEmail}
                     onChange={(event) => setRegisterEmail(event.target.value)}
                   />
-                  <FormInput
-                    label={authCopy.password}
-                    name="register_password"
-                    type="password"
-                    placeholder="********"
-                    value={registerPassword}
-                    onChange={(event) => setRegisterPassword(event.target.value)}
-                  />
-                  <FormInput
-                    label={authCopy.confirmPassword}
-                    name="register_confirm_password"
-                    type="password"
-                    placeholder="********"
-                    value={registerConfirmPassword}
-                    onChange={(event) => setRegisterConfirmPassword(event.target.value)}
-                  />
+                  <div className="mb-4">
+                    <label
+                      htmlFor="register_password"
+                      className="mb-1 block text-sm font-medium text-gray-700"
+                    >
+                      {authCopy.password}
+                    </label>
+                    <div className="relative">
+                      <input
+                        id="register_password"
+                        name="register_password"
+                        type={showRegisterPassword ? 'text' : 'password'}
+                        placeholder="********"
+                        value={registerPassword}
+                        onChange={(event) => setRegisterPassword(event.target.value)}
+                        className="w-full rounded-md border px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowRegisterPassword((prev) => !prev)}
+                        aria-label={showRegisterPassword ? 'Hide password' : 'Show password'}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-gray-500 transition hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        {showRegisterPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="mb-4">
+                    <label
+                      htmlFor="register_confirm_password"
+                      className="mb-1 block text-sm font-medium text-gray-700"
+                    >
+                      {authCopy.confirmPassword}
+                    </label>
+                    <div className="relative">
+                      <input
+                        id="register_confirm_password"
+                        name="register_confirm_password"
+                        type={showRegisterConfirmPassword ? 'text' : 'password'}
+                        placeholder="********"
+                        value={registerConfirmPassword}
+                        onChange={(event) => setRegisterConfirmPassword(event.target.value)}
+                        className="w-full rounded-md border px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowRegisterConfirmPassword((prev) => !prev)}
+                        aria-label={
+                          showRegisterConfirmPassword ? 'Hide password' : 'Show password'
+                        }
+                        className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-gray-500 transition hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      >
+                        {showRegisterConfirmPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
 
                   {registerError && (
                     <p className="mt-2 text-center text-sm text-red-500">{registerError}</p>
