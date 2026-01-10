@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 const DIRECTUS_URL = process.env.NEXT_PUBLIC_DIRECTUS_URL;
+const ADMIN_TOKEN = process.env.DIRECTUS_ADMIN_TOKEN;
 
 type RefreshResult = {
   accessToken: string;
@@ -89,9 +90,7 @@ function applyAuthCookies(
   return response;
 }
 
-const allowedFields = new Set(["avatar", "cover"]);
-
-export async function POST(req: Request) {
+export async function DELETE(req: Request) {
   let token = getAccessToken(req);
   let refreshResult: RefreshResult | null = null;
 
@@ -116,89 +115,24 @@ export async function POST(req: Request) {
     return applyAuthCookies(response, refreshResult);
   }
 
-  const { searchParams } = new URL(req.url);
-  const field = searchParams.get("field") || "";
+  const payload = (await req.json().catch(() => ({}))) as {
+    current_password?: string;
+  };
+  const currentPassword = String(payload.current_password || "");
 
-  if (!allowedFields.has(field)) {
+  if (!currentPassword) {
     const response = NextResponse.json(
-      { message: "Unsupported field." },
+      { message: "Vui lòng nhập mật khẩu hiện tại." },
       { status: 400 }
     );
     return applyAuthCookies(response, refreshResult);
   }
 
-  const formData = await req.formData();
-  const file = formData.get("file");
-
-  if (!file || typeof file === "string") {
-    const response = NextResponse.json(
-      { message: "No file uploaded." },
-      { status: 400 }
-    );
-    return applyAuthCookies(response, refreshResult);
-  }
-
-  const uploadBody = new FormData();
-  uploadBody.append("file", file);
-
-  let uploadRes = await fetch(`${DIRECTUS_URL}/files`, {
-    method: "POST",
+  let userRes = await fetch(`${DIRECTUS_URL}/users/me?fields=id,email`, {
     headers: {
       Authorization: `Bearer ${token}`,
     },
-    body: uploadBody,
   });
-
-  let uploadJson = await uploadRes.json().catch(() => null);
-
-  if (!uploadRes.ok && uploadRes.status === 401) {
-    const retryRefresh = await refreshAccessToken(req);
-    if (retryRefresh?.accessToken) {
-      refreshResult = retryRefresh;
-      token = retryRefresh.accessToken;
-      uploadRes = await fetch(`${DIRECTUS_URL}/files`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: uploadBody,
-      });
-      uploadJson = await uploadRes.json().catch(() => null);
-    }
-  }
-
-  if (!uploadRes.ok) {
-    const response = NextResponse.json(
-      {
-        message:
-          uploadJson?.errors?.[0]?.message ||
-          uploadJson?.message ||
-          "Upload failed.",
-      },
-      { status: uploadRes.status }
-    );
-    return applyAuthCookies(response, refreshResult);
-  }
-
-  const fileId = uploadJson?.data?.id;
-
-  if (!fileId) {
-    const response = NextResponse.json(
-      { message: "Upload failed." },
-      { status: 500 }
-    );
-    return applyAuthCookies(response, refreshResult);
-  }
-
-  let userRes = await fetch(`${DIRECTUS_URL}/users/me`, {
-    method: "PATCH",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
-    },
-    body: JSON.stringify({ [field]: fileId }),
-  });
-
   let userJson = await userRes.json().catch(() => null);
 
   if (!userRes.ok && userRes.status === 401) {
@@ -206,13 +140,10 @@ export async function POST(req: Request) {
     if (retryRefresh?.accessToken) {
       refreshResult = retryRefresh;
       token = retryRefresh.accessToken;
-      userRes = await fetch(`${DIRECTUS_URL}/users/me`, {
-        method: "PATCH",
+      userRes = await fetch(`${DIRECTUS_URL}/users/me?fields=id,email`, {
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ [field]: fileId }),
       });
       userJson = await userRes.json().catch(() => null);
     }
@@ -220,20 +151,126 @@ export async function POST(req: Request) {
 
   if (!userRes.ok) {
     const response = NextResponse.json(
-      {
-        message:
-          userJson?.errors?.[0]?.message ||
-          userJson?.message ||
-          "Update failed.",
-      },
+      { message: userJson?.message || "Không thể xác thực tài khoản." },
       { status: userRes.status }
     );
     return applyAuthCookies(response, refreshResult);
   }
 
-  const response = NextResponse.json({
-    user: userJson?.data ?? userJson,
-    file: uploadJson?.data ?? null,
+  const email = userJson?.data?.email;
+  const userId = userJson?.data?.id;
+
+  if (!email || !userId) {
+    const response = NextResponse.json(
+      { message: "Không tìm thấy thông tin tài khoản." },
+      { status: 400 }
+    );
+    return applyAuthCookies(response, refreshResult);
+  }
+
+  const verifyRes = await fetch(`${DIRECTUS_URL}/auth/login`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ email, password: currentPassword }),
   });
-  return applyAuthCookies(response, refreshResult);
+
+  if (!verifyRes.ok) {
+    const response = NextResponse.json(
+      { message: "Mật khẩu hiện tại không đúng." },
+      { status: 400 }
+    );
+    return applyAuthCookies(response, refreshResult);
+  }
+
+  let deleteRes = await fetch(`${DIRECTUS_URL}/users/${userId}`, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!deleteRes.ok && deleteRes.status === 401) {
+    const retryRefresh = await refreshAccessToken(req);
+    if (retryRefresh?.accessToken) {
+      refreshResult = retryRefresh;
+      token = retryRefresh.accessToken;
+      deleteRes = await fetch(`${DIRECTUS_URL}/users/${userId}`, {
+        method: "DELETE",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+    }
+  }
+
+  if (!deleteRes.ok && deleteRes.status === 403 && ADMIN_TOKEN) {
+    const adminRes = await fetch(`${DIRECTUS_URL}/users/${userId}`, {
+      method: "DELETE",
+      headers: {
+        Authorization: `Bearer ${ADMIN_TOKEN}`,
+      },
+    });
+    const adminJson = await adminRes.json().catch(() => null);
+
+    if (adminRes.ok) {
+      const response = NextResponse.json({ message: "Tài khoản đã được xóa." });
+      applyAuthCookies(response, refreshResult);
+      response.cookies.set("directus_access_token", "", {
+        httpOnly: true,
+        sameSite: "lax",
+        maxAge: 0,
+        path: "/",
+      });
+      response.cookies.set("directus_refresh_token", "", {
+        httpOnly: true,
+        sameSite: "lax",
+        maxAge: 0,
+        path: "/",
+      });
+      return response;
+    }
+
+    const response = NextResponse.json(
+      {
+        message:
+          adminJson?.errors?.[0]?.message ||
+          adminJson?.message ||
+          "Xóa tài khoản thất bại.",
+      },
+      { status: adminRes.status }
+    );
+    return applyAuthCookies(response, refreshResult);
+  }
+
+  if (!deleteRes.ok) {
+    const deleteJson = await deleteRes.json().catch(() => null);
+    const response = NextResponse.json(
+      {
+        message:
+          deleteJson?.errors?.[0]?.message ||
+          deleteJson?.message ||
+          "Xóa tài khoản thất bại.",
+      },
+      { status: deleteRes.status }
+    );
+    return applyAuthCookies(response, refreshResult);
+  }
+
+  const response = NextResponse.json({ message: "Tài khoản đã được xóa." });
+  applyAuthCookies(response, refreshResult);
+  response.cookies.set("directus_access_token", "", {
+    httpOnly: true,
+    sameSite: "lax",
+    maxAge: 0,
+    path: "/",
+  });
+  response.cookies.set("directus_refresh_token", "", {
+    httpOnly: true,
+    sameSite: "lax",
+    maxAge: 0,
+    path: "/",
+  });
+  return response;
 }

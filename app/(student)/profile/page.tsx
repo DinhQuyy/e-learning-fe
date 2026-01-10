@@ -4,6 +4,7 @@ import {
   useEffect,
   useRef,
   useState,
+  type CSSProperties,
   type ChangeEvent,
   type PointerEvent
 } from 'react';
@@ -19,8 +20,48 @@ import {
   Award,
   BookOpen,
   Clock,
-  TrendingUp
+  TrendingUp,
+  Bell,
+  Lock,
+  Shield,
+  Trash2
 } from 'lucide-react';
+
+type NotificationSettings = {
+  email: boolean;
+  push: boolean;
+  courseUpdates: boolean;
+  marketing: boolean;
+};
+
+type PrivacySettings = {
+  profileVisibility: 'public' | 'students' | 'private';
+  showEmail: boolean;
+  showLocation: boolean;
+  showCertificates: boolean;
+};
+
+type AppSettings = {
+  notifications: NotificationSettings;
+  privacy: PrivacySettings;
+};
+
+type SettingsPanel = 'password' | 'notifications' | 'privacy' | 'delete';
+
+const defaultAppSettings: AppSettings = {
+  notifications: {
+    email: true,
+    push: true,
+    courseUpdates: true,
+    marketing: false,
+  },
+  privacy: {
+    profileVisibility: 'students',
+    showEmail: false,
+    showLocation: true,
+    showCertificates: true,
+  },
+};
 
 export default function ProfilePage() {
   const [isEditing, setIsEditing] = useState(false);
@@ -39,12 +80,35 @@ export default function ProfilePage() {
     cover?: string | null;
     location?: string | null;
     description?: string | null;
+    display_name?: string | null;
+    name?: string | null;
+    preferences?: {
+      app_settings?: Partial<AppSettings>;
+    } | null;
   } | null>(null);
   const [isLoadingUser, setIsLoadingUser] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
   const [isUploadingCover, setIsUploadingCover] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [activeSettingsPanel, setActiveSettingsPanel] =
+    useState<SettingsPanel | null>(null);
+  const [appSettings, setAppSettings] =
+    useState<AppSettings>(defaultAppSettings);
+  const [isSavingPassword, setIsSavingPassword] = useState(false);
+  const [isSavingNotifications, setIsSavingNotifications] = useState(false);
+  const [isSavingPrivacy, setIsSavingPrivacy] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [passwordForm, setPasswordForm] = useState({
+    current: '',
+    next: '',
+    confirm: '',
+  });
+  const [deleteForm, setDeleteForm] = useState({
+    confirmText: '',
+    password: '',
+  });
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [coverPreview, setCoverPreview] = useState<string | null>(null);
   const avatarInputRef = useRef<HTMLInputElement | null>(null);
@@ -76,15 +140,50 @@ export default function ProfilePage() {
   const displayAvatarUrl = avatarPreview ?? avatarUrl;
   const displayCoverUrl = coverPreview ?? coverUrl;
 
-  const mapUserToFormData = (nextUser: typeof user) => ({
-    name: [nextUser?.first_name, nextUser?.last_name]
+  const resolveDisplayName = (nextUser: typeof user) => {
+    const combined = [nextUser?.first_name, nextUser?.last_name]
       .filter(Boolean)
       .join(' ')
-      .trim(),
+      .trim();
+    if (combined) return combined;
+
+    const fallback = nextUser?.display_name ?? nextUser?.name;
+    if (fallback) return String(fallback).trim();
+
+    const email = nextUser?.email ?? '';
+    if (!email) return '';
+    return email.split('@')[0] || email;
+  };
+
+  const mapUserToFormData = (nextUser: typeof user) => ({
+    name: resolveDisplayName(nextUser),
     email: nextUser?.email ?? '',
     location: nextUser?.location ?? '',
     bio: nextUser?.description ?? '',
   });
+
+  const mapUserToAppSettings = (nextUser: typeof user): AppSettings => {
+    const preferences =
+      (nextUser?.preferences && typeof nextUser.preferences === 'object'
+        ? nextUser.preferences
+        : null) ?? {};
+    const storedSettings =
+      (preferences.app_settings &&
+      typeof preferences.app_settings === 'object'
+        ? preferences.app_settings
+        : null) ?? {};
+
+    return {
+      notifications: {
+        ...defaultAppSettings.notifications,
+        ...(storedSettings.notifications ?? {}),
+      },
+      privacy: {
+        ...defaultAppSettings.privacy,
+        ...(storedSettings.privacy ?? {}),
+      },
+    };
+  };
 
   const cropConfigs = {
     avatar: {
@@ -429,6 +528,17 @@ export default function ProfilePage() {
         const res = await fetch('/api/auth/me', { cache: 'no-store' });
         if (!res.ok) {
           const data = await res.json().catch(() => null);
+          if (res.status === 401) {
+            if (isActive) {
+              setUser(null);
+              setAppSettings(defaultAppSettings);
+              setErrorMessage(
+                data?.message || 'Phiên đăng nhập đã hết hạn.'
+              );
+            }
+            window.location.href = '/login';
+            return;
+          }
           throw new Error(data?.message || 'Unable to load profile.');
         }
         const json = await res.json();
@@ -436,10 +546,21 @@ export default function ProfilePage() {
         if (!isActive) return;
         setUser(nextUser);
         setFormData(mapUserToFormData(nextUser));
+        setAppSettings(mapUserToAppSettings(nextUser));
+        const prefsRes = await fetch('/api/auth/me/preferences', {
+          cache: 'no-store',
+        });
+        if (prefsRes.ok) {
+          const prefsJson = await prefsRes.json().catch(() => null);
+          if (isActive && prefsJson?.settings) {
+            setAppSettings(prefsJson.settings);
+          }
+        }
       } catch (error) {
         console.error('Fetch profile error:', error);
         if (isActive) {
           setUser(null);
+          setAppSettings(defaultAppSettings);
           setErrorMessage(
             error instanceof Error ? error.message : 'Unable to load profile.'
           );
@@ -498,6 +619,13 @@ export default function ProfilePage() {
     },
   ];
 
+  const settingsPanels = [
+    { id: 'password', label: 'Đổi mật khẩu', icon: Lock },
+    { id: 'notifications', label: 'Cài đặt thông báo', icon: Bell },
+    { id: 'privacy', label: 'Quyền riêng tư', icon: Shield },
+    { id: 'delete', label: 'Xóa tài khoản', icon: Trash2, tone: 'danger' },
+  ] as const;
+
   const handleSave = async () => {
     setIsSaving(true);
     setErrorMessage(null);
@@ -537,8 +665,165 @@ export default function ProfilePage() {
     setErrorMessage(null);
   };
 
+  const handleToggleSettingsPanel = (panel: SettingsPanel) => {
+    setActiveSettingsPanel((prev) => (prev === panel ? null : panel));
+    setErrorMessage(null);
+    setSuccessMessage(null);
+  };
+
+  const handlePasswordUpdate = async () => {
+    if (isSavingPassword) return;
+    setErrorMessage(null);
+    setSuccessMessage(null);
+
+    if (!passwordForm.current || !passwordForm.next || !passwordForm.confirm) {
+      setErrorMessage('Vui lòng nhập đầy đủ thông tin.');
+      return;
+    }
+
+    if (passwordForm.next.length < 8) {
+      setErrorMessage('Mật khẩu mới phải có ít nhất 8 ký tự.');
+      return;
+    }
+
+    if (passwordForm.next !== passwordForm.confirm) {
+      setErrorMessage('Mật khẩu xác nhận không khớp.');
+      return;
+    }
+
+    setIsSavingPassword(true);
+
+    try {
+      const res = await fetch('/api/auth/me/password', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          current_password: passwordForm.current,
+          new_password: passwordForm.next,
+          confirm_password: passwordForm.confirm,
+        }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(data?.message || 'Đổi mật khẩu thất bại.');
+      }
+      setPasswordForm({ current: '', next: '', confirm: '' });
+      setSuccessMessage(data?.message || 'Đổi mật khẩu thành công.');
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : 'Đổi mật khẩu thất bại.'
+      );
+    } finally {
+      setIsSavingPassword(false);
+    }
+  };
+
+  const handleSavePreferences = async (
+    section: 'notifications' | 'privacy'
+  ) => {
+    setErrorMessage(null);
+    setSuccessMessage(null);
+
+    if (section === 'notifications') {
+      setIsSavingNotifications(true);
+    } else {
+      setIsSavingPrivacy(true);
+    }
+
+    const payload: Partial<AppSettings> =
+      section === 'notifications'
+        ? { notifications: appSettings.notifications }
+        : { privacy: appSettings.privacy };
+
+    try {
+      const res = await fetch('/api/auth/me/preferences', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(data?.message || 'Cập nhật cài đặt thất bại.');
+      }
+      if (data?.settings) {
+        setAppSettings(data.settings);
+      } else {
+        setAppSettings((prev) => ({
+          notifications: payload.notifications ?? prev.notifications,
+          privacy: payload.privacy ?? prev.privacy,
+        }));
+      }
+      setSuccessMessage('Cập nhật cài đặt thành công.');
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : 'Cập nhật cài đặt thất bại.'
+      );
+    } finally {
+      if (section === 'notifications') {
+        setIsSavingNotifications(false);
+      } else {
+        setIsSavingPrivacy(false);
+      }
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (isDeletingAccount) return;
+    setErrorMessage(null);
+    setSuccessMessage(null);
+
+    const confirmPhrase = 'XOA';
+    const normalizedConfirm = deleteForm.confirmText.trim().toUpperCase();
+
+    if (normalizedConfirm !== confirmPhrase) {
+      setErrorMessage(`Vui lòng nhập "${confirmPhrase}" để xác nhận.`);
+      return;
+    }
+
+    if (!deleteForm.password) {
+      setErrorMessage('Vui lòng nhập mật khẩu hiện tại.');
+      return;
+    }
+
+    setIsDeletingAccount(true);
+
+    try {
+      const res = await fetch('/api/auth/me/delete', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          current_password: deleteForm.password,
+        }),
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(data?.message || 'Xóa tài khoản thất bại.');
+      }
+      setDeleteForm({ confirmText: '', password: '' });
+      setSuccessMessage(data?.message || 'Tài khoản đã được xóa.');
+      window.setTimeout(() => {
+        window.location.href = '/';
+      }, 1200);
+    } catch (error) {
+      setErrorMessage(
+        error instanceof Error ? error.message : 'Xóa tài khoản thất bại.'
+      );
+    } finally {
+      setIsDeletingAccount(false);
+    }
+  };
+
+  const resolvedDisplayName = resolveDisplayName(user);
   const headerName =
-    formData.name || (isLoadingUser ? 'Loading...' : 'Student User');
+    formData.name ||
+    resolvedDisplayName ||
+    (isLoadingUser ? 'Loading...' : 'Student User');
   const bioText =
     formData.bio || (isLoadingUser ? 'Loading profile...' : 'No bio yet.');
   const emailText =
@@ -546,25 +831,51 @@ export default function ProfilePage() {
   const locationText =
     formData.location || (isLoadingUser ? 'Loading...' : 'Not provided');
   const userInitial = (headerName || 'S').charAt(0).toUpperCase();
+  const isAccountReady = Boolean(user && !isLoadingUser);
+  const pageStyle = {
+    '--profile-accent': '#0ea5e9',
+    '--profile-accent-soft': 'rgba(14, 165, 233, 0.12)',
+    '--profile-warm': '#f59e0b',
+    '--profile-ink': '#0f172a',
+    '--profile-card': 'rgba(255, 255, 255, 0.86)',
+    '--profile-border': 'rgba(148, 163, 184, 0.35)',
+  } as CSSProperties;
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="container px-4 py-8 mx-auto">
-        <div className="max-w-5xl mx-auto">
+    <div
+      className="relative min-h-screen overflow-hidden bg-slate-50 font-sans text-slate-900"
+      style={pageStyle}
+    >
+      <div aria-hidden className="pointer-events-none absolute inset-0">
+        <div className="absolute -top-40 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-[radial-gradient(circle,_rgba(14,165,233,0.25),_transparent_60%)]" />
+        <div className="absolute top-16 right-[-6rem] h-72 w-72 rounded-full bg-[radial-gradient(circle,_rgba(251,191,36,0.25),_transparent_60%)]" />
+        <div className="absolute bottom-[-8rem] left-[-4rem] h-80 w-80 rounded-full bg-[radial-gradient(circle,_rgba(148,163,184,0.25),_transparent_60%)]" />
+        <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(248,250,252,0.2),rgba(248,250,252,0.95))]" />
+      </div>
+      <div className="relative container px-4 pb-16 pt-10 mx-auto">
+        <div className="max-w-6xl mx-auto">
           {errorMessage && (
-            <div className="mb-6 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <div className="mb-6 rounded-2xl border border-red-200/70 bg-red-50/80 px-5 py-4 text-sm text-red-700 shadow-sm">
               {errorMessage}
             </div>
           )}
+          {successMessage && (
+            <div className="mb-6 rounded-2xl border border-emerald-200/70 bg-emerald-50/80 px-5 py-4 text-sm text-emerald-700 shadow-sm">
+              {successMessage}
+            </div>
+          )}
           {isLoadingUser && !errorMessage && (
-            <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 px-4 py-3 text-sm text-blue-700">
+            <div className="mb-6 rounded-2xl border border-blue-200/70 bg-blue-50/80 px-5 py-4 text-sm text-blue-700 shadow-sm">
               Loading profile...
             </div>
           )}
           {/* Profile Header */}
-          <div className="mb-8 overflow-hidden bg-white border border-gray-200 shadow-sm rounded-xl">
+          <div
+            className="mb-10 overflow-hidden rounded-3xl border border-white/70 bg-[color:var(--profile-card)] shadow-[0_25px_70px_-40px_rgba(15,23,42,0.45)] backdrop-blur motion-safe:animate-[profile-rise_0.7s_ease-out_both]"
+            style={{ animationDelay: '0.05s' }}
+          >
             {/* Cover Photo */}
-            <div className="relative h-48 overflow-hidden bg-gray-200">
+            <div className="relative h-56 overflow-hidden bg-slate-200 sm:h-64">
               {displayCoverUrl ? (
                 <img
                   src={displayCoverUrl}
@@ -572,13 +883,14 @@ export default function ProfilePage() {
                   className="absolute inset-0 w-full h-full object-cover"
                 />
               ) : (
-                <div className="absolute inset-0 bg-gradient-to-r from-blue-600 to-purple-600" />
+                <div className="absolute inset-0 bg-gradient-to-r from-sky-500 via-teal-500 to-amber-400" />
               )}
+              <div className="absolute inset-0 bg-gradient-to-tr from-slate-900/40 via-slate-900/10 to-transparent" />
               <button
                 type="button"
                 onClick={() => coverInputRef.current?.click()}
                 disabled={isLoadingUser || isUploadingCover}
-                className="absolute flex items-center gap-2 px-4 py-2 text-sm font-semibold transition-colors rounded-lg bottom-4 right-4 bg-white/90 backdrop-blur-sm hover:bg-white disabled:opacity-70 disabled:cursor-not-allowed"
+                className="absolute bottom-4 right-4 flex items-center gap-2 rounded-full border border-white/70 bg-white/85 px-4 py-2 text-sm font-semibold text-slate-700 shadow-md backdrop-blur-sm transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-70"
               >
                 <Camera className="w-4 h-4" />
                 Đổi ảnh bìa
@@ -593,18 +905,18 @@ export default function ProfilePage() {
             </div>
 
             {/* Profile Info */}
-            <div className="px-8 pb-8">
-              <div className="flex flex-col items-start gap-6 mb-6 -mt-16 md:flex-row md:items-end">
+            <div className="px-6 pb-8 sm:px-8">
+              <div className="flex flex-col items-start gap-8 mb-8 -mt-10 sm:-mt-14 md:flex-row md:items-end">
                 {/* Avatar */}
                 <div className="relative">
                   {displayAvatarUrl ? (
                     <img
                       src={displayAvatarUrl}
                       alt={headerName}
-                      className="w-32 h-32 object-cover border-4 border-white rounded-full shadow-lg"
+                      className="h-32 w-32 object-cover rounded-full ring-4 ring-white shadow-xl sm:h-36 sm:w-36"
                     />
                   ) : (
-                    <div className="flex items-center justify-center w-32 h-32 text-4xl font-bold text-white border-4 border-white rounded-full shadow-lg bg-gradient-to-br from-blue-600 to-purple-600">
+                    <div className="flex h-32 w-32 items-center justify-center rounded-full bg-gradient-to-br from-sky-500 via-teal-500 to-amber-400 text-4xl font-bold text-white shadow-xl ring-4 ring-white sm:h-36 sm:w-36">
                       {userInitial}
                     </div>
                   )}
@@ -612,7 +924,7 @@ export default function ProfilePage() {
                     type="button"
                     onClick={() => avatarInputRef.current?.click()}
                     disabled={isLoadingUser || isUploadingAvatar}
-                    className="absolute flex items-center justify-center w-8 h-8 transition-colors bg-white rounded-full shadow-lg bottom-2 right-2 hover:bg-gray-100 disabled:opacity-70 disabled:cursor-not-allowed"
+                    className="absolute bottom-2 right-2 flex h-9 w-9 items-center justify-center rounded-full border border-white/80 bg-white/90 shadow-lg backdrop-blur-sm transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-70"
                   >
                     <Camera className="w-4 h-4 text-gray-700" />
                   </button>
@@ -626,13 +938,15 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Name & Actions */}
-                <div className="flex-1 pt-4">
-                  <div className="flex items-center justify-between mb-2">
+                <div className="flex-1 pt-2">
+                  <div className="flex flex-wrap items-center justify-between gap-4 mb-3">
                     <div>
-                      <h1 className="text-3xl font-bold text-gray-900">
+                      <p className="text-xs uppercase tracking-[0.32em] text-slate-400">
+                        Học viên
+                      </p>
+                      <h1 className="mt-2 text-3xl font-bold tracking-tight text-[color:var(--profile-ink)] sm:text-4xl">
                         {headerName}
                       </h1>
-                      <p className="mt-1 text-gray-600">Học viên</p>
                     </div>
                     {!isEditing && (
                       <button
@@ -641,31 +955,36 @@ export default function ProfilePage() {
                           setErrorMessage(null);
                         }}
                         disabled={isLoadingUser || isSaving}
-                        className="flex items-center gap-2 px-6 py-2 font-semibold text-gray-700 transition-all border-2 border-gray-300 rounded-lg hover:border-blue-600 hover:text-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="mt-2 flex items-center gap-2 rounded-full border border-slate-200 bg-white/80 px-6 py-2 font-semibold text-slate-700 shadow-sm transition-all hover:border-[color:var(--profile-accent)] hover:text-[color:var(--profile-accent)] disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         <Edit2 className="w-4 h-4" />
                         Chỉnh sửa
                       </button>
                     )}
                   </div>
-                  <p className="text-gray-700">{bioText}</p>
+                  <p className="max-w-2xl text-slate-600">{bioText}</p>
                 </div>
               </div>
 
               {/* Stats */}
-              <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-4 lg:gap-5">
                 {stats.map((stat, index) => {
                   const Icon = stat.icon;
                   const colors = {
-                    blue: 'bg-blue-100 text-blue-600',
-                    green: 'bg-green-100 text-green-600',
-                    purple: 'bg-purple-100 text-purple-600',
-                    orange: 'bg-orange-100 text-orange-600',
+                    blue: 'bg-sky-100 text-sky-700',
+                    green: 'bg-emerald-100 text-emerald-700',
+                    purple: 'bg-amber-100 text-amber-700',
+                    orange: 'bg-rose-100 text-rose-700',
                   };
 
                   return (
-                    <div key={index} className="p-4 text-center rounded-lg bg-gray-50">
-                      <div className={`w-10 h-10 ${colors[stat.color as keyof typeof colors]} rounded-lg flex items-center justify-center mx-auto mb-2`}>
+                    <div
+                      key={index}
+                      className="group rounded-2xl border border-white/70 bg-white/70 p-4 text-center shadow-sm backdrop-blur-sm transition-all hover:-translate-y-1 hover:shadow-lg"
+                    >
+                      <div
+                        className={`mx-auto mb-2 flex h-11 w-11 items-center justify-center rounded-xl ring-1 ring-white/70 ${colors[stat.color as keyof typeof colors]}`}
+                      >
                         <Icon className="w-5 h-5" />
                       </div>
                       <div className="text-2xl font-bold text-gray-900">
@@ -680,11 +999,14 @@ export default function ProfilePage() {
           </div>
 
           {/* Main Content */}
-          <div className="grid gap-8 lg:grid-cols-3">
+          <div className="grid gap-6 lg:grid-cols-12">
             {/* Left Column - Profile Details */}
-            <div className="space-y-8 lg:col-span-2">
+            <div className="space-y-6 lg:col-span-8">
               {/* Personal Information */}
-              <div className="p-6 bg-white border border-gray-200 shadow-sm rounded-xl">
+              <div
+                className="rounded-3xl border border-white/70 bg-[color:var(--profile-card)] p-6 shadow-[0_20px_60px_-40px_rgba(15,23,42,0.4)] backdrop-blur motion-safe:animate-[profile-rise_0.7s_ease-out_both]"
+                style={{ animationDelay: '0.1s' }}
+              >
                 <div className="flex items-center justify-between mb-6">
                   <h2 className="text-xl font-bold text-gray-900">
                     Thông tin cá nhân
@@ -694,14 +1016,14 @@ export default function ProfilePage() {
                       <button
                         onClick={handleCancel}
                         disabled={isSaving}
-                        className="px-4 py-2 text-gray-700 transition-colors border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="rounded-full border border-slate-200 bg-white/80 px-4 py-2 text-slate-700 shadow-sm transition-colors hover:border-slate-300 hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         <X className="w-4 h-4" />
                       </button>
                       <button
                         onClick={handleSave}
                         disabled={isSaving}
-                        className="flex items-center gap-2 px-4 py-2 text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex items-center gap-2 rounded-full bg-[color:var(--profile-accent)] px-4 py-2 text-white shadow-sm transition-colors hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         <Save className="w-4 h-4" />
                         Lưu
@@ -725,7 +1047,7 @@ export default function ProfilePage() {
                         onChange={(e) =>
                           setFormData({ ...formData, name: e.target.value })
                         }
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full rounded-xl border border-slate-200 bg-white/80 px-4 py-2 text-slate-900 shadow-sm focus:border-[color:var(--profile-accent)] focus:outline-none focus:ring-2 focus:ring-[color:var(--profile-accent)]/30"
                       />
                     ) : (
                       <p className="text-gray-900">{headerName}</p>
@@ -743,7 +1065,7 @@ export default function ProfilePage() {
                         type="email"
                         value={formData.email}
                         disabled
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed"
+                        className="w-full rounded-xl border border-slate-200 bg-slate-100/80 px-4 py-2 text-slate-500 shadow-sm cursor-not-allowed"
                       />
                     ) : (
                       <p className="text-gray-900">{emailText}</p>
@@ -764,7 +1086,7 @@ export default function ProfilePage() {
                         onChange={(e) =>
                           setFormData({ ...formData, location: e.target.value })
                         }
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full rounded-xl border border-slate-200 bg-white/80 px-4 py-2 text-slate-900 shadow-sm focus:border-[color:var(--profile-accent)] focus:outline-none focus:ring-2 focus:ring-[color:var(--profile-accent)]/30"
                       />
                     ) : (
                       <p className="text-gray-900">{locationText}</p>
@@ -784,7 +1106,7 @@ export default function ProfilePage() {
                           setFormData({ ...formData, bio: e.target.value })
                         }
                         rows={4}
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full rounded-xl border border-slate-200 bg-white/80 px-4 py-2 text-slate-900 shadow-sm focus:border-[color:var(--profile-accent)] focus:outline-none focus:ring-2 focus:ring-[color:var(--profile-accent)]/30"
                       />
                     ) : (
                       <p className="text-gray-900">{bioText}</p>
@@ -794,7 +1116,10 @@ export default function ProfilePage() {
               </div>
 
               {/* Certificates */}
-              <div className="p-6 bg-white border border-gray-200 shadow-sm rounded-xl">
+              <div
+                className="rounded-3xl border border-white/70 bg-[color:var(--profile-card)] p-6 shadow-[0_20px_60px_-40px_rgba(15,23,42,0.4)] backdrop-blur motion-safe:animate-[profile-rise_0.7s_ease-out_both]"
+                style={{ animationDelay: '0.18s' }}
+              >
                 <h2 className="mb-6 text-xl font-bold text-gray-900">
                   Chứng chỉ ({certificates.length})
                 </h2>
@@ -802,13 +1127,13 @@ export default function ProfilePage() {
                   {certificates.map((cert) => (
                     <div
                       key={cert.id}
-                      className="overflow-hidden transition-all border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:shadow-lg group"
+                      className="group overflow-hidden rounded-2xl border border-white/70 bg-white/80 shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl"
                     >
-                      <div className="relative h-32 bg-gradient-to-br from-blue-600 to-purple-600">
+                      <div className="relative h-36 bg-gradient-to-br from-sky-500 via-teal-500 to-amber-400">
                         <img
                           src={cert.thumbnail}
                           alt={cert.title}
-                          className="object-cover w-full h-full transition-opacity opacity-20 group-hover:opacity-30"
+                          className="h-full w-full object-cover opacity-30 transition-opacity group-hover:opacity-40"
                         />
                         <div className="absolute inset-0 flex items-center justify-center">
                           <Award className="w-12 h-12 text-white" />
@@ -830,34 +1155,416 @@ export default function ProfilePage() {
             </div>
 
             {/* Right Column - Links & Settings */}
-            <div className="space-y-8">
+            <div className="space-y-6 lg:col-span-4">
               {/* Account Settings */}
-              <div className="p-6 bg-white border border-gray-200 shadow-sm rounded-xl">
+              <div
+                className="rounded-3xl border border-white/70 bg-[color:var(--profile-card)] p-6 shadow-[0_20px_60px_-40px_rgba(15,23,42,0.4)] backdrop-blur motion-safe:animate-[profile-rise_0.7s_ease-out_both]"
+                style={{ animationDelay: '0.26s' }}
+              >
                 <h3 className="mb-4 text-lg font-bold text-gray-900">
                   Cài đặt tài khoản
                 </h3>
                 <div className="space-y-2">
-                  <button className="w-full px-4 py-2 text-sm text-left text-gray-700 transition-colors rounded-lg hover:bg-gray-100">
-                    Đổi mật khẩu
-                  </button>
-                  <button className="w-full px-4 py-2 text-sm text-left text-gray-700 transition-colors rounded-lg hover:bg-gray-100">
-                    Cài đặt thông báo
-                  </button>
-                  <button className="w-full px-4 py-2 text-sm text-left text-gray-700 transition-colors rounded-lg hover:bg-gray-100">
-                    Quyền riêng tư
-                  </button>
-                  <button className="w-full px-4 py-2 text-sm text-left text-red-600 transition-colors rounded-lg hover:bg-red-50">
-                    Xóa tài khoản
-                  </button>
+                  {settingsPanels.map((panel) => {
+                    const Icon = panel.icon;
+                    const isActive = activeSettingsPanel === panel.id;
+                    const isDanger = panel.tone === 'danger';
+
+                    return (
+                      <button
+                        key={panel.id}
+                        type="button"
+                        disabled={!isAccountReady}
+                        onClick={() => handleToggleSettingsPanel(panel.id)}
+                        aria-expanded={isActive}
+                        className={`flex w-full items-center justify-between rounded-xl border px-4 py-2 text-left text-sm font-semibold transition-colors ${
+                          isActive
+                            ? 'border-slate-200 bg-slate-50'
+                            : 'border-transparent'
+                        } ${
+                          isDanger
+                            ? 'text-red-600 hover:bg-red-50/70'
+                            : 'text-slate-700 hover:bg-slate-50'
+                        } disabled:cursor-not-allowed disabled:opacity-60`}
+                      >
+                        <span className="flex items-center gap-2">
+                          <Icon className="h-4 w-4" />
+                          {panel.label}
+                        </span>
+                        <span className="text-xs text-slate-400">
+                          {isActive ? 'Ẩn' : 'Mở'}
+                        </span>
+                      </button>
+                    );
+                  })}
                 </div>
+
+                {activeSettingsPanel === 'password' && (
+                  <div className="mt-4 rounded-2xl border border-slate-200/70 bg-white/80 p-4">
+                    <p className="text-sm text-slate-600">
+                      Cập nhật mật khẩu của bạn. Mật khẩu mới tối thiểu 8 ký tự.
+                    </p>
+                    <div className="mt-4 space-y-3">
+                      <div>
+                        <label className="text-xs font-semibold text-slate-600">
+                          Mật khẩu hiện tại
+                        </label>
+                        <input
+                          type="password"
+                          value={passwordForm.current}
+                          disabled={!isAccountReady || isSavingPassword}
+                          onChange={(event) =>
+                            setPasswordForm((prev) => ({
+                              ...prev,
+                              current: event.target.value,
+                            }))
+                          }
+                          className="mt-2 w-full rounded-xl border border-slate-200 bg-white/80 px-4 py-2 text-slate-900 shadow-sm focus:border-[color:var(--profile-accent)] focus:outline-none focus:ring-2 focus:ring-[color:var(--profile-accent)]/30 disabled:cursor-not-allowed disabled:bg-slate-100/80"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-slate-600">
+                          Mật khẩu mới
+                        </label>
+                        <input
+                          type="password"
+                          value={passwordForm.next}
+                          disabled={!isAccountReady || isSavingPassword}
+                          onChange={(event) =>
+                            setPasswordForm((prev) => ({
+                              ...prev,
+                              next: event.target.value,
+                            }))
+                          }
+                          className="mt-2 w-full rounded-xl border border-slate-200 bg-white/80 px-4 py-2 text-slate-900 shadow-sm focus:border-[color:var(--profile-accent)] focus:outline-none focus:ring-2 focus:ring-[color:var(--profile-accent)]/30 disabled:cursor-not-allowed disabled:bg-slate-100/80"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-slate-600">
+                          Xác nhận mật khẩu mới
+                        </label>
+                        <input
+                          type="password"
+                          value={passwordForm.confirm}
+                          disabled={!isAccountReady || isSavingPassword}
+                          onChange={(event) =>
+                            setPasswordForm((prev) => ({
+                              ...prev,
+                              confirm: event.target.value,
+                            }))
+                          }
+                          className="mt-2 w-full rounded-xl border border-slate-200 bg-white/80 px-4 py-2 text-slate-900 shadow-sm focus:border-[color:var(--profile-accent)] focus:outline-none focus:ring-2 focus:ring-[color:var(--profile-accent)]/30 disabled:cursor-not-allowed disabled:bg-slate-100/80"
+                        />
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handlePasswordUpdate}
+                      disabled={!isAccountReady || isSavingPassword}
+                      className="mt-4 w-full rounded-full bg-[color:var(--profile-accent)] px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-sky-600 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {isSavingPassword ? 'Đang cập nhật...' : 'Cập nhật mật khẩu'}
+                    </button>
+                  </div>
+                )}
+
+                {activeSettingsPanel === 'notifications' && (
+                  <div className="mt-4 rounded-2xl border border-slate-200/70 bg-white/80 p-4">
+                    <p className="text-sm text-slate-600">
+                      Chọn các thông báo bạn muốn nhận từ hệ thống.
+                    </p>
+                    <div className="mt-4 space-y-3">
+                      <label className="flex items-center justify-between gap-3 rounded-xl border border-slate-200/70 bg-white/70 px-3 py-3">
+                        <div>
+                          <p className="text-sm font-semibold text-slate-700">
+                            Email thông báo
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            Nhận cập nhật qua email.
+                          </p>
+                        </div>
+                        <input
+                          type="checkbox"
+                          checked={appSettings.notifications.email}
+                          disabled={!isAccountReady || isSavingNotifications}
+                          onChange={(event) =>
+                            setAppSettings((prev) => ({
+                              ...prev,
+                              notifications: {
+                                ...prev.notifications,
+                                email: event.target.checked,
+                              },
+                            }))
+                          }
+                          className="h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+                        />
+                      </label>
+                      <label className="flex items-center justify-between gap-3 rounded-xl border border-slate-200/70 bg-white/70 px-3 py-3">
+                        <div>
+                          <p className="text-sm font-semibold text-slate-700">
+                            Thông báo đẩy
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            Nhận thông báo trên trình duyệt.
+                          </p>
+                        </div>
+                        <input
+                          type="checkbox"
+                          checked={appSettings.notifications.push}
+                          disabled={!isAccountReady || isSavingNotifications}
+                          onChange={(event) =>
+                            setAppSettings((prev) => ({
+                              ...prev,
+                              notifications: {
+                                ...prev.notifications,
+                                push: event.target.checked,
+                              },
+                            }))
+                          }
+                          className="h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+                        />
+                      </label>
+                      <label className="flex items-center justify-between gap-3 rounded-xl border border-slate-200/70 bg-white/70 px-3 py-3">
+                        <div>
+                          <p className="text-sm font-semibold text-slate-700">
+                            Cập nhật khóa học
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            Thông báo khi có bài học mới.
+                          </p>
+                        </div>
+                        <input
+                          type="checkbox"
+                          checked={appSettings.notifications.courseUpdates}
+                          disabled={!isAccountReady || isSavingNotifications}
+                          onChange={(event) =>
+                            setAppSettings((prev) => ({
+                              ...prev,
+                              notifications: {
+                                ...prev.notifications,
+                                courseUpdates: event.target.checked,
+                              },
+                            }))
+                          }
+                          className="h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+                        />
+                      </label>
+                      <label className="flex items-center justify-between gap-3 rounded-xl border border-slate-200/70 bg-white/70 px-3 py-3">
+                        <div>
+                          <p className="text-sm font-semibold text-slate-700">
+                            Tin tức & khuyến mãi
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            Ưu đãi và thông tin nền tảng.
+                          </p>
+                        </div>
+                        <input
+                          type="checkbox"
+                          checked={appSettings.notifications.marketing}
+                          disabled={!isAccountReady || isSavingNotifications}
+                          onChange={(event) =>
+                            setAppSettings((prev) => ({
+                              ...prev,
+                              notifications: {
+                                ...prev.notifications,
+                                marketing: event.target.checked,
+                              },
+                            }))
+                          }
+                          className="h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+                        />
+                      </label>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleSavePreferences('notifications')}
+                      disabled={!isAccountReady || isSavingNotifications}
+                      className="mt-4 w-full rounded-full border border-slate-200 bg-white/90 px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {isSavingNotifications
+                        ? 'Đang lưu...'
+                        : 'Lưu cài đặt thông báo'}
+                    </button>
+                  </div>
+                )}
+
+                {activeSettingsPanel === 'privacy' && (
+                  <div className="mt-4 rounded-2xl border border-slate-200/70 bg-white/80 p-4">
+                    <p className="text-sm text-slate-600">
+                      Kiểm soát nội dung hiển thị trên hồ sơ của bạn.
+                    </p>
+                    <div className="mt-4 space-y-3">
+                      <div>
+                        <label className="text-xs font-semibold text-slate-600">
+                          Hiển thị hồ sơ
+                        </label>
+                        <select
+                          value={appSettings.privacy.profileVisibility}
+                          disabled={!isAccountReady || isSavingPrivacy}
+                          onChange={(event) =>
+                            setAppSettings((prev) => ({
+                              ...prev,
+                              privacy: {
+                                ...prev.privacy,
+                                profileVisibility: event.target
+                                  .value as PrivacySettings['profileVisibility'],
+                              },
+                            }))
+                          }
+                          className="mt-2 w-full rounded-xl border border-slate-200 bg-white/80 px-4 py-2 text-slate-900 shadow-sm focus:border-[color:var(--profile-accent)] focus:outline-none focus:ring-2 focus:ring-[color:var(--profile-accent)]/30 disabled:cursor-not-allowed disabled:bg-slate-100/80"
+                        >
+                          <option value="public">Công khai</option>
+                          <option value="students">Chỉ học viên</option>
+                          <option value="private">Chỉ mình tôi</option>
+                        </select>
+                      </div>
+                      <label className="flex items-center justify-between gap-3 rounded-xl border border-slate-200/70 bg-white/70 px-3 py-3">
+                        <div>
+                          <p className="text-sm font-semibold text-slate-700">
+                            Hiển thị email
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            Cho phép người khác xem email.
+                          </p>
+                        </div>
+                        <input
+                          type="checkbox"
+                          checked={appSettings.privacy.showEmail}
+                          disabled={!isAccountReady || isSavingPrivacy}
+                          onChange={(event) =>
+                            setAppSettings((prev) => ({
+                              ...prev,
+                              privacy: {
+                                ...prev.privacy,
+                                showEmail: event.target.checked,
+                              },
+                            }))
+                          }
+                          className="h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+                        />
+                      </label>
+                      <label className="flex items-center justify-between gap-3 rounded-xl border border-slate-200/70 bg-white/70 px-3 py-3">
+                        <div>
+                          <p className="text-sm font-semibold text-slate-700">
+                            Hiển thị vị trí
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            Cho phép hiển thị nơi bạn sống.
+                          </p>
+                        </div>
+                        <input
+                          type="checkbox"
+                          checked={appSettings.privacy.showLocation}
+                          disabled={!isAccountReady || isSavingPrivacy}
+                          onChange={(event) =>
+                            setAppSettings((prev) => ({
+                              ...prev,
+                              privacy: {
+                                ...prev.privacy,
+                                showLocation: event.target.checked,
+                              },
+                            }))
+                          }
+                          className="h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+                        />
+                      </label>
+                      <label className="flex items-center justify-between gap-3 rounded-xl border border-slate-200/70 bg-white/70 px-3 py-3">
+                        <div>
+                          <p className="text-sm font-semibold text-slate-700">
+                            Hiển thị chứng chỉ
+                          </p>
+                          <p className="text-xs text-slate-500">
+                            Chia sẻ chứng chỉ đã đạt được.
+                          </p>
+                        </div>
+                        <input
+                          type="checkbox"
+                          checked={appSettings.privacy.showCertificates}
+                          disabled={!isAccountReady || isSavingPrivacy}
+                          onChange={(event) =>
+                            setAppSettings((prev) => ({
+                              ...prev,
+                              privacy: {
+                                ...prev.privacy,
+                                showCertificates: event.target.checked,
+                              },
+                            }))
+                          }
+                          className="h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+                        />
+                      </label>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleSavePreferences('privacy')}
+                      disabled={!isAccountReady || isSavingPrivacy}
+                      className="mt-4 w-full rounded-full border border-slate-200 bg-white/90 px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {isSavingPrivacy ? 'Đang lưu...' : 'Lưu quyền riêng tư'}
+                    </button>
+                  </div>
+                )}
+
+                {activeSettingsPanel === 'delete' && (
+                  <div className="mt-4 rounded-2xl border border-red-200/70 bg-red-50/60 p-4">
+                    <p className="text-sm text-red-700">
+                      Hành động này sẽ xóa vĩnh viễn tài khoản và dữ liệu của
+                      bạn.
+                    </p>
+                    <div className="mt-4 space-y-3">
+                      <div>
+                        <label className="text-xs font-semibold text-red-700">
+                          Nhập "XOA" để xác nhận
+                        </label>
+                        <input
+                          type="text"
+                          value={deleteForm.confirmText}
+                          disabled={!isAccountReady || isDeletingAccount}
+                          onChange={(event) =>
+                            setDeleteForm((prev) => ({
+                              ...prev,
+                              confirmText: event.target.value,
+                            }))
+                          }
+                          className="mt-2 w-full rounded-xl border border-red-200 bg-white/80 px-4 py-2 text-slate-900 shadow-sm focus:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-200 disabled:cursor-not-allowed disabled:bg-red-50/80"
+                        />
+                      </div>
+                      <div>
+                        <label className="text-xs font-semibold text-red-700">
+                          Mật khẩu hiện tại
+                        </label>
+                        <input
+                          type="password"
+                          value={deleteForm.password}
+                          disabled={!isAccountReady || isDeletingAccount}
+                          onChange={(event) =>
+                            setDeleteForm((prev) => ({
+                              ...prev,
+                              password: event.target.value,
+                            }))
+                          }
+                          className="mt-2 w-full rounded-xl border border-red-200 bg-white/80 px-4 py-2 text-slate-900 shadow-sm focus:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-200 disabled:cursor-not-allowed disabled:bg-red-50/80"
+                        />
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleDeleteAccount}
+                      disabled={!isAccountReady || isDeletingAccount}
+                      className="mt-4 w-full rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    >
+                      {isDeletingAccount ? 'Đang xóa...' : 'Xóa tài khoản'}
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
         </div>
       </div>
       {isCropOpen && cropImageSrc && activeCropConfig && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 py-6">
-          <div className="w-full max-w-3xl rounded-2xl bg-white p-6 shadow-xl">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 px-4 py-6">
+          <div className="w-full max-w-3xl rounded-3xl bg-white/95 p-6 shadow-2xl backdrop-blur">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h3 className="text-lg font-bold text-gray-900">
@@ -884,7 +1591,7 @@ export default function ProfilePage() {
                   onPointerMove={handleCropPointerMove}
                   onPointerUp={handleCropPointerUp}
                   onPointerLeave={handleCropPointerUp}
-                  className="relative overflow-hidden rounded-xl bg-gray-100 touch-none select-none cursor-grab"
+                  className="relative cursor-grab select-none overflow-hidden rounded-2xl bg-slate-100/80 shadow-inner touch-none"
                   style={activeCropConfig.frameStyle}
                 >
                   <img
@@ -927,14 +1634,14 @@ export default function ProfilePage() {
               <button
                 type="button"
                 onClick={closeCropper}
-                className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
+                className="rounded-full border border-slate-200 bg-white/80 px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-white"
               >
                 Hủy
               </button>
               <button
                 type="button"
                 onClick={handleCropConfirm}
-                className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-blue-700"
+                className="rounded-full bg-[color:var(--profile-accent)] px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-sky-600"
               >
                 Lưu ảnh
               </button>
@@ -942,6 +1649,18 @@ export default function ProfilePage() {
           </div>
         </div>
       )}
+      <style jsx global>{`
+        @keyframes profile-rise {
+          from {
+            opacity: 0;
+            transform: translateY(18px) scale(0.98);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+      `}</style>
     </div>
   );
 }

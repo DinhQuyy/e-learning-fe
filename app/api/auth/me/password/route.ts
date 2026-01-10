@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 
 const DIRECTUS_URL = process.env.NEXT_PUBLIC_DIRECTUS_URL;
+const ADMIN_TOKEN = process.env.DIRECTUS_ADMIN_TOKEN;
 
 type RefreshResult = {
   accessToken: string;
@@ -89,9 +90,7 @@ function applyAuthCookies(
   return response;
 }
 
-const allowedFields = new Set(["avatar", "cover"]);
-
-export async function POST(req: Request) {
+export async function PATCH(req: Request) {
   let token = getAccessToken(req);
   let refreshResult: RefreshResult | null = null;
 
@@ -116,89 +115,45 @@ export async function POST(req: Request) {
     return applyAuthCookies(response, refreshResult);
   }
 
-  const { searchParams } = new URL(req.url);
-  const field = searchParams.get("field") || "";
+  const payload = (await req.json().catch(() => ({}))) as {
+    current_password?: string;
+    new_password?: string;
+    confirm_password?: string;
+  };
 
-  if (!allowedFields.has(field)) {
+  const currentPassword = String(payload.current_password || "");
+  const newPassword = String(payload.new_password || "");
+  const confirmPassword = String(payload.confirm_password || "");
+
+  if (!currentPassword || !newPassword || !confirmPassword) {
     const response = NextResponse.json(
-      { message: "Unsupported field." },
+      { message: "Vui lòng nhập đầy đủ thông tin." },
       { status: 400 }
     );
     return applyAuthCookies(response, refreshResult);
   }
 
-  const formData = await req.formData();
-  const file = formData.get("file");
-
-  if (!file || typeof file === "string") {
+  if (newPassword.length < 8) {
     const response = NextResponse.json(
-      { message: "No file uploaded." },
+      { message: "Mật khẩu mới phải có ít nhất 8 ký tự." },
       { status: 400 }
     );
     return applyAuthCookies(response, refreshResult);
   }
 
-  const uploadBody = new FormData();
-  uploadBody.append("file", file);
-
-  let uploadRes = await fetch(`${DIRECTUS_URL}/files`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-    },
-    body: uploadBody,
-  });
-
-  let uploadJson = await uploadRes.json().catch(() => null);
-
-  if (!uploadRes.ok && uploadRes.status === 401) {
-    const retryRefresh = await refreshAccessToken(req);
-    if (retryRefresh?.accessToken) {
-      refreshResult = retryRefresh;
-      token = retryRefresh.accessToken;
-      uploadRes = await fetch(`${DIRECTUS_URL}/files`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-        body: uploadBody,
-      });
-      uploadJson = await uploadRes.json().catch(() => null);
-    }
-  }
-
-  if (!uploadRes.ok) {
+  if (newPassword !== confirmPassword) {
     const response = NextResponse.json(
-      {
-        message:
-          uploadJson?.errors?.[0]?.message ||
-          uploadJson?.message ||
-          "Upload failed.",
-      },
-      { status: uploadRes.status }
+      { message: "Mật khẩu xác nhận không khớp." },
+      { status: 400 }
     );
     return applyAuthCookies(response, refreshResult);
   }
 
-  const fileId = uploadJson?.data?.id;
-
-  if (!fileId) {
-    const response = NextResponse.json(
-      { message: "Upload failed." },
-      { status: 500 }
-    );
-    return applyAuthCookies(response, refreshResult);
-  }
-
-  let userRes = await fetch(`${DIRECTUS_URL}/users/me`, {
-    method: "PATCH",
+  let userRes = await fetch(`${DIRECTUS_URL}/users/me?fields=id,email`, {
     headers: {
-      "Content-Type": "application/json",
       Authorization: `Bearer ${token}`,
     },
-    body: JSON.stringify({ [field]: fileId }),
   });
-
   let userJson = await userRes.json().catch(() => null);
 
   if (!userRes.ok && userRes.status === 401) {
@@ -206,13 +161,10 @@ export async function POST(req: Request) {
     if (retryRefresh?.accessToken) {
       refreshResult = retryRefresh;
       token = retryRefresh.accessToken;
-      userRes = await fetch(`${DIRECTUS_URL}/users/me`, {
-        method: "PATCH",
+      userRes = await fetch(`${DIRECTUS_URL}/users/me?fields=id,email`, {
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({ [field]: fileId }),
       });
       userJson = await userRes.json().catch(() => null);
     }
@@ -220,20 +172,110 @@ export async function POST(req: Request) {
 
   if (!userRes.ok) {
     const response = NextResponse.json(
-      {
-        message:
-          userJson?.errors?.[0]?.message ||
-          userJson?.message ||
-          "Update failed.",
-      },
+      { message: userJson?.message || "Không thể xác thực tài khoản." },
       { status: userRes.status }
     );
     return applyAuthCookies(response, refreshResult);
   }
 
+  const email = userJson?.data?.email;
+  const userId = userJson?.data?.id;
+  if (!email || !userId) {
+    const response = NextResponse.json(
+      { message: "Không tìm thấy thông tin tài khoản." },
+      { status: 400 }
+    );
+    return applyAuthCookies(response, refreshResult);
+  }
+
+  const verifyRes = await fetch(`${DIRECTUS_URL}/auth/login`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ email, password: currentPassword }),
+  });
+
+  if (!verifyRes.ok) {
+    const response = NextResponse.json(
+      { message: "Mật khẩu hiện tại không đúng." },
+      { status: 400 }
+    );
+    return applyAuthCookies(response, refreshResult);
+  }
+
+  let updateRes = await fetch(`${DIRECTUS_URL}/users/me`, {
+    method: "PATCH",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify({ password: newPassword }),
+  });
+  let updateJson = await updateRes.json().catch(() => null);
+
+  if (!updateRes.ok && updateRes.status === 401) {
+    const retryRefresh = await refreshAccessToken(req);
+    if (retryRefresh?.accessToken) {
+      refreshResult = retryRefresh;
+      token = retryRefresh.accessToken;
+      updateRes = await fetch(`${DIRECTUS_URL}/users/me`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ password: newPassword }),
+      });
+      updateJson = await updateRes.json().catch(() => null);
+    }
+  }
+
+  if (!updateRes.ok && updateRes.status === 403 && ADMIN_TOKEN) {
+    const adminRes = await fetch(`${DIRECTUS_URL}/users/${userId}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${ADMIN_TOKEN}`,
+      },
+      body: JSON.stringify({ password: newPassword }),
+    });
+    const adminJson = await adminRes.json().catch(() => null);
+
+    if (adminRes.ok) {
+      const response = NextResponse.json({
+        message: "Đổi mật khẩu thành công.",
+      });
+      return applyAuthCookies(response, refreshResult);
+    }
+
+    const response = NextResponse.json(
+      {
+        message:
+          adminJson?.errors?.[0]?.message ||
+          adminJson?.message ||
+          "Đổi mật khẩu thất bại.",
+      },
+      { status: adminRes.status }
+    );
+    return applyAuthCookies(response, refreshResult);
+  }
+
+  if (!updateRes.ok) {
+    const response = NextResponse.json(
+      {
+        message:
+          updateJson?.errors?.[0]?.message ||
+          updateJson?.message ||
+          "Đổi mật khẩu thất bại.",
+      },
+      { status: updateRes.status }
+    );
+    return applyAuthCookies(response, refreshResult);
+  }
+
   const response = NextResponse.json({
-    user: userJson?.data ?? userJson,
-    file: uploadJson?.data ?? null,
+    message: "Đổi mật khẩu thành công.",
   });
   return applyAuthCookies(response, refreshResult);
 }

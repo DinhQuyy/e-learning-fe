@@ -1,8 +1,8 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import {
   GraduationCap,
   BookOpen,
@@ -20,13 +20,21 @@ import {
 export default function StudentNavbar() {
   const pathname = usePathname();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const searchQuery = searchParams.get('search') ?? '';
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [courseSearch, setCourseSearch] = useState(searchQuery);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [suggestions, setSuggestions] = useState<Array<{ id: string | number; title: string; instructor?: string }>>([]);
+  const [isSuggesting, setIsSuggesting] = useState(false);
   const [user, setUser] = useState<{
     first_name?: string;
     last_name?: string;
     email?: string;
+    display_name?: string;
+    name?: string;
   } | null>(null);
   const [isLoadingUser, setIsLoadingUser] = useState(true);
 
@@ -56,11 +64,69 @@ export default function StudentNavbar() {
     };
   }, []);
 
+  useEffect(() => {
+    if (pathname === '/courses') {
+      setCourseSearch(searchQuery);
+    }
+  }, [pathname, searchQuery]);
+
+  useEffect(() => {
+    const term = courseSearch.trim();
+    if (!showSuggestions || !term) {
+      setSuggestions([]);
+      setIsSuggesting(false);
+      return;
+    }
+
+    let isActive = true;
+    const controller = new AbortController();
+
+    const handler = setTimeout(async () => {
+      setIsSuggesting(true);
+      try {
+        const res = await fetch(
+          `/api/courses?search=${encodeURIComponent(term)}&limit=6`,
+          { cache: 'no-store', signal: controller.signal }
+        );
+        const data = await res.json().catch(() => null);
+        const items = Array.isArray(data?.courses)
+          ? data.courses
+          : Array.isArray(data?.data)
+            ? data.data
+            : [];
+        if (!isActive) return;
+        const mapped = items
+          .map((course: any) => ({
+            id: course.id,
+            title: course.title ?? course.name ?? '',
+            instructor:
+              course.teacher_name ?? course.instructor_name ?? course.instructor ?? '',
+          }))
+          .filter((course: any) => course.title);
+        setSuggestions(mapped.slice(0, 6));
+      } catch (error) {
+        if (!isActive) return;
+        setSuggestions([]);
+      } finally {
+        if (isActive) setIsSuggesting(false);
+      }
+    }, 250);
+
+    return () => {
+      isActive = false;
+      clearTimeout(handler);
+      controller.abort();
+    };
+  }, [courseSearch, showSuggestions]);
+
   const displayName = [user?.first_name, user?.last_name]
     .filter(Boolean)
     .join(' ')
     .trim();
-  const userName = displayName || user?.email || 'Student';
+  const fallbackName = (user?.display_name || user?.name || '').trim();
+  const emailLocal =
+    user?.email ? user.email.split('@')[0] || user.email : '';
+  const userName = displayName || fallbackName || emailLocal || user?.email || 'Student';
   const userEmail = user?.email || (isLoadingUser ? '...' : 'student@example.com');
   const userInitial = (userName || 'S').charAt(0).toUpperCase();
 
@@ -88,6 +154,25 @@ export default function StudentNavbar() {
     },
   ];
 
+  const handleCourseSearch = (value?: string) => {
+    const term = (value ?? courseSearch).trim();
+    const nextUrl = term ? `/courses?search=${encodeURIComponent(term)}` : '/courses';
+    router.push(nextUrl);
+    setShowSuggestions(false);
+    setShowNotifications(false);
+    setShowProfileMenu(false);
+    setShowMobileMenu(false);
+  };
+
+  const handleSuggestionSelect = (course: { id: string | number; title: string }) => {
+    setCourseSearch(course.title);
+    setShowSuggestions(false);
+    setShowNotifications(false);
+    setShowProfileMenu(false);
+    setShowMobileMenu(false);
+    router.push(`/courses/${course.id}`);
+  };
+
   const handleLogout = async () => {
     try {
       await fetch('/api/auth/logout', { method: 'POST' });
@@ -98,7 +183,8 @@ export default function StudentNavbar() {
     setShowProfileMenu(false);
     setShowNotifications(false);
     setShowMobileMenu(false);
-    router.replace('/login');
+    setShowSuggestions(false);
+    router.replace('/');
     router.refresh();
   };
 
@@ -150,8 +236,54 @@ export default function StudentNavbar() {
                 <input
                   type="text"
                   placeholder="Tìm khóa học..."
+                  value={courseSearch}
+                  onChange={(event) => setCourseSearch(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') {
+                      event.preventDefault();
+                      handleCourseSearch(event.currentTarget.value);
+                    }
+                  }}
+                  onFocus={() => setShowSuggestions(true)}
+                  onBlur={() => {
+                    setTimeout(() => setShowSuggestions(false), 150);
+                  }}
                   className="w-64 py-2 pr-4 text-sm border border-gray-300 rounded-lg pl-9 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
+                {showSuggestions && courseSearch.trim() && (
+                  <div className="absolute left-0 right-0 z-20 mt-2 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
+                    {isSuggesting ? (
+                      <div className="px-4 py-3 text-sm text-gray-500">
+                        Dang tim...
+                      </div>
+                    ) : suggestions.length ? (
+                      suggestions.map((course) => (
+                        <button
+                          key={course.id}
+                          type="button"
+                          onMouseDown={(event) => {
+                            event.preventDefault();
+                            handleSuggestionSelect(course);
+                          }}
+                          className="w-full px-4 py-2 text-left transition-colors hover:bg-gray-50"
+                        >
+                          <p className="text-sm font-semibold text-gray-900">
+                            {course.title}
+                          </p>
+                          {course.instructor ? (
+                            <p className="text-xs text-gray-500">
+                              {course.instructor}
+                            </p>
+                          ) : null}
+                        </button>
+                      ))
+                    ) : (
+                      <div className="px-4 py-3 text-sm text-gray-500">
+                        Khong tim thay khoa hoc
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -329,8 +461,54 @@ export default function StudentNavbar() {
                   <input
                     type="text"
                     placeholder="Tìm khóa học..."
+                    value={courseSearch}
+                    onChange={(event) => setCourseSearch(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        event.preventDefault();
+                        handleCourseSearch(event.currentTarget.value);
+                      }
+                    }}
+                    onFocus={() => setShowSuggestions(true)}
+                    onBlur={() => {
+                      setTimeout(() => setShowSuggestions(false), 150);
+                    }}
                     className="w-full py-2 pr-4 text-sm border border-gray-300 rounded-lg pl-9 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
+                  {showSuggestions && courseSearch.trim() && (
+                    <div className="absolute left-0 right-0 z-20 mt-2 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
+                      {isSuggesting ? (
+                        <div className="px-4 py-3 text-sm text-gray-500">
+                          Dang tim...
+                        </div>
+                      ) : suggestions.length ? (
+                        suggestions.map((course) => (
+                          <button
+                            key={course.id}
+                            type="button"
+                            onMouseDown={(event) => {
+                              event.preventDefault();
+                              handleSuggestionSelect(course);
+                            }}
+                            className="w-full px-4 py-2 text-left transition-colors hover:bg-gray-50"
+                          >
+                            <p className="text-sm font-semibold text-gray-900">
+                              {course.title}
+                            </p>
+                            {course.instructor ? (
+                              <p className="text-xs text-gray-500">
+                                {course.instructor}
+                              </p>
+                            ) : null}
+                          </button>
+                        ))
+                      ) : (
+                        <div className="px-4 py-3 text-sm text-gray-500">
+                          Khong tim thay khoa hoc
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 

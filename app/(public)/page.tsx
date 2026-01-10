@@ -4,7 +4,6 @@ import {
   BookOpen, 
   Users, 
   TrendingUp,
-  Search,
   Star,
   Clock,
   PlayCircle,
@@ -14,6 +13,7 @@ import {
   ArrowRight,
   CheckCircle2
 } from 'lucide-react';
+import HeroCourseSearch from '@/components/public/HeroCourseSearch';
 
 // Mock data
 const featuredCourses = [
@@ -132,17 +132,10 @@ export default function LandingPage() {
               </p>
 
               {/* Search Bar */}
-              <div className="relative">
-                <Search className="absolute w-5 h-5 text-gray-400 -translate-y-1/2 left-4 top-1/2" />
-                <input
-                  type="text"
-                  placeholder="Tìm kiếm khóa học..."
-                  className="w-full py-4 pl-12 pr-4 text-lg border-2 border-gray-200 shadow-sm rounded-xl focus:outline-none focus:border-blue-500"
-                />
-                <button className="absolute px-6 py-2 text-white transition-colors -translate-y-1/2 bg-blue-600 rounded-lg right-2 top-1/2 hover:bg-blue-700">
-                  Tìm kiếm
-                </button>
-              </div>
+              <HeroCourseSearch
+                placeholder="Tìm kiếm khóa học..."
+                buttonLabel="Tìm kiếm"
+              />
 
               {/* CTA Buttons */}
               <div className="flex flex-wrap gap-4">

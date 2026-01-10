@@ -5,7 +5,8 @@ const DIRECTUS_URL = process.env.NEXT_PUBLIC_DIRECTUS_URL!;
 
 export async function POST(req: Request) {
   try {
-    const { email, password } = await req.json();
+    const { email, password, remember } = await req.json();
+    const rememberMe = Boolean(remember);
 
     if (!email || !password) {
       return NextResponse.json(
@@ -43,14 +44,14 @@ export async function POST(req: Request) {
     resNext.cookies.set("directus_access_token", access_token, {
       httpOnly: true,
       sameSite: "lax",
-      maxAge: expires, // giây
+      ...(rememberMe ? { maxAge: expires } : {}),
       path: "/",
     });
 
     resNext.cookies.set("directus_refresh_token", refresh_token, {
       httpOnly: true,
       sameSite: "lax",
-      maxAge: 60 * 60 * 24 * 30, // 30 ngày
+      ...(rememberMe ? { maxAge: 60 * 60 * 24 * 30 } : {}),
       path: "/",
     });
 

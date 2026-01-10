@@ -7,6 +7,8 @@ type FormInputProps = {
   placeholder?: string;
   value?: string;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  list?: string;
+  autoComplete?: string;
 };
 
 export default function FormInput({
@@ -16,6 +18,8 @@ export default function FormInput({
   placeholder,
   value,
   onChange,
+  list,
+  autoComplete,
 }: FormInputProps) {
   return (
     <div className="mb-4">
@@ -32,6 +36,8 @@ export default function FormInput({
         placeholder={placeholder}
         value={value}
         onChange={onChange}
+        list={list}
+        autoComplete={autoComplete}
         className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
     </div>

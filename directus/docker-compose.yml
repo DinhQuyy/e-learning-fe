@@ -18,6 +18,8 @@ services:
       ADMIN_PASSWORD: "Admin1234"
       ADMIN_FIRST_NAME: "Admin"
       ADMIN_LAST_NAME: "User"
+      PUBLIC_URL: "http://localhost:8055"
+      PASSWORD_RESET_URL_ALLOW_LIST: "http://localhost:3000,http://localhost:3000/reset-password"
 
     volumes:
       - ./data:/data
