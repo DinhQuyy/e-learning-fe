@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useEffect, useState } from 'react';
 import {
   GraduationCap, 
   BookOpen, 
@@ -71,22 +72,48 @@ const featuredCourses = [
 ];
 
 const categories = [
-  { name: 'Web Development', icon: '💻', courses: 245 },
-  { name: 'Data Science', icon: '📊', courses: 189 },
-  { name: 'Design', icon: '🎨', courses: 156 },
-  { name: 'Business', icon: '💼', courses: 203 },
-  { name: 'Marketing', icon: '📱', courses: 167 },
-  { name: 'Photography', icon: '📷', courses: 134 },
+  { name: 'Web Development', slug: 'web-development', icon: '💻', courses: 245 },
+  { name: 'Data Science', slug: 'data-science', icon: '📊', courses: 189 },
+  { name: 'Design', slug: 'design', icon: '🎨', courses: 156 },
+  { name: 'Business', slug: 'business', icon: '💼', courses: 203 },
+  { name: 'Marketing', slug: 'marketing', icon: '📱', courses: 167 },
+  { name: 'Photography', slug: 'photography', icon: '📷', courses: 134 },
 ];
 
 const statIcons = [Users, BookOpen, GraduationCap, Award];
 const featureIcons = [PlayCircle, Target, Zap, Award];
 const formatNumber = (value: number) =>
   new Intl.NumberFormat('vi-VN').format(value);
+const heroCarouselDefaults = [
+  'https://images.unsplash.com/photo-1454165205744-3b78555e5572?auto=format&fit=crop&w=1200&q=80',
+  'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1200&q=80',
+  'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1200&q=80',
+];
 
 export default function LandingPage() {
   const { settings: publicSettings } = usePublicSettings();
   const heroBadge = publicSettings.heroBadge || publicSettings.siteName;
+  const heroImages = [
+    publicSettings.heroImageUrl,
+    ...heroCarouselDefaults,
+  ].filter((url): url is string => Boolean(url));
+  const [heroImageIndex, setHeroImageIndex] = useState(0);
+
+  useEffect(() => {
+    setHeroImageIndex(0);
+  }, [heroImages.length]);
+
+  useEffect(() => {
+    if (heroImages.length <= 1) {
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setHeroImageIndex((prev) => (prev + 1) % heroImages.length);
+    }, 4500);
+
+    return () => clearInterval(interval);
+  }, [heroImages.length]);
 
   if (publicSettings.maintenance) {
     return (
@@ -116,7 +143,7 @@ export default function LandingPage() {
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-purple-50">
         <div className="container px-4 py-20 mx-auto md:py-32">
-          <div className="grid items-center gap-12 lg:grid-cols-2">
+          <div className="grid items-center gap-12 lg:grid-cols-2 lg:items-end">
             {/* Left Content */}
             <div className="space-y-8">
               <div className="inline-block px-4 py-2 text-sm font-semibold text-blue-700 bg-blue-100 rounded-full">
@@ -170,13 +197,22 @@ export default function LandingPage() {
             </div>
 
             {/* Right Image */}
-            <div className="relative hidden lg:block">
-              <div className="relative z-10">
-                <img
-                  src={publicSettings.heroImageUrl}
-                  alt={publicSettings.siteName}
-                  className="shadow-2xl rounded-2xl"
-                />
+            <div className="relative hidden lg:block w-full lg:justify-self-end">
+              <div className="relative z-10 h-[483px] w-[597px] overflow-hidden rounded-2xl shadow-2xl">
+                <div
+                  className="flex h-full w-full transition-transform duration-700 ease-out"
+                  style={{ transform: `translateX(-${heroImageIndex * 100}%)` }}
+                >
+                  {heroImages.map((imageUrl, index) => (
+                    <img
+                      key={`${imageUrl}-${index}`}
+                      src={imageUrl}
+                      alt={`${publicSettings.siteName} preview ${index + 1}`}
+                      className="h-full w-full flex-shrink-0 object-cover"
+                      loading={index === 0 ? 'eager' : 'lazy'}
+                    />
+                  ))}
+                </div>
               </div>
               {/* Decorative elements */}
               <div className="absolute bg-purple-300 rounded-full -top-4 -right-4 w-72 h-72 blur-3xl opacity-20"></div>
@@ -227,7 +263,7 @@ export default function LandingPage() {
             {categories.map((category, index) => (
               <Link
                 key={index}
-                href={`/courses?category=${category.name}`}
+                href={`/courses?category=${encodeURIComponent(category.name)}`}
                 className="p-6 text-center transition-all bg-white border-2 border-gray-200 rounded-xl hover:border-blue-500 hover:shadow-lg group"
               >
                 <div className="mb-3 text-4xl transition-transform group-hover:scale-110">

@@ -399,7 +399,7 @@ export default function StudentNavbar() {
                     </Link>
 
                     <Link
-                      href="/certificates"
+                      href="/wishlist"
                       className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-100"
                     >
                       <Award className="w-4 h-4" />

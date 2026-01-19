@@ -598,7 +598,7 @@ export default function MyLearningPage() {
                 </h3>
                 <div className="space-y-2">
                   <Link
-                    href="/certificates"
+                    href="/wishlist"
                     className="block px-4 py-2 text-sm text-gray-700 transition-colors rounded-lg hover:bg-gray-100"
                   >
                     📜 Chứng chỉ của tôi

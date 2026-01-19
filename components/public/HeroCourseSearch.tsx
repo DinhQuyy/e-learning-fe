@@ -24,6 +24,7 @@ export default function HeroCourseSearch({
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [isSuggesting, setIsSuggesting] = useState(false);
+  const isSearchDisabled = !courseSearch.trim();
 
   useEffect(() => {
     const term = courseSearch.trim();
@@ -76,8 +77,10 @@ export default function HeroCourseSearch({
 
   const handleCourseSearch = (value?: string) => {
     const term = (value ?? courseSearch).trim();
-    const nextUrl = term ? `/courses?search=${encodeURIComponent(term)}` : '/courses';
-    router.push(nextUrl);
+    if (!term) {
+      return;
+    }
+    router.push(`/courses?search=${encodeURIComponent(term)}`);
     setShowSuggestions(false);
   };
 
@@ -98,6 +101,9 @@ export default function HeroCourseSearch({
         onKeyDown={(event) => {
           if (event.key === 'Enter') {
             event.preventDefault();
+            if (isSearchDisabled) {
+              return;
+            }
             handleCourseSearch(event.currentTarget.value);
           }
         }}
@@ -110,7 +116,12 @@ export default function HeroCourseSearch({
       <button
         type="button"
         onClick={() => handleCourseSearch()}
-        className="absolute px-6 py-2 text-white transition-colors -translate-y-1/2 bg-blue-600 rounded-lg right-2 top-1/2 hover:bg-blue-700"
+        disabled={isSearchDisabled}
+        className={`absolute right-2 top-1/2 -translate-y-1/2 rounded-lg px-6 py-2 transition-colors ${
+          isSearchDisabled
+            ? 'cursor-not-allowed bg-gray-300 text-gray-500'
+            : 'bg-blue-600 text-white hover:bg-blue-700'
+        }`}
       >
         {buttonLabel}
       </button>

@@ -147,7 +147,7 @@ const [isLoadingUser, setIsLoadingUser] = useState(true);
   const profileLinks = [
     { href: '/profile', label: authCopy.profile, icon: User },
     { href: '/my-learning', label: authCopy.myLearning, icon: BookOpen },
-    { href: '/certificates', label: authCopy.certificates, icon: Award },
+    { href: '/wishlist', label: authCopy.certificates, icon: Award },
     { href: '/wishlist', label: authCopy.wishlist, icon: Heart },
     { href: '/settings', label: authCopy.settings, icon: Settings },
   ];
@@ -653,7 +653,7 @@ const [isLoadingUser, setIsLoadingUser] = useState(true);
                           const Icon = link.icon;
                           return (
                             <Link
-                              key={link.href}
+                              key={`${link.href}-${link.label}`}
                               href={link.href}
                               className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-100"
                             >
@@ -820,7 +820,7 @@ const [isLoadingUser, setIsLoadingUser] = useState(true);
                     </div>
                     {profileLinks.map((link) => (
                       <Link
-                        key={link.href}
+                        key={`${link.href}-${link.label}`}
                         href={link.href}
                         className="block px-4 py-3 text-gray-700 transition-colors rounded-lg hover:bg-gray-50"
                         onClick={() => setShowMobileMenu(false)}

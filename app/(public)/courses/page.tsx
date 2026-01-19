@@ -39,6 +39,7 @@ type Course = {
 
 const normalize = (value: unknown) =>
   String(value ?? '')
+    .trim()
     .toLowerCase()
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '');
@@ -70,13 +71,232 @@ const priceRanges = [
   '2M+',
 ];
 
+const mockCategories: Category[] = [
+  { id: 'web-development', title: 'Web Development' },
+  { id: 'data-science', title: 'Data Science' },
+  { id: 'design', title: 'Design' },
+  { id: 'business', title: 'Business' },
+  { id: 'marketing', title: 'Marketing' },
+  { id: 'photography', title: 'Photography' },
+];
+
+const mockCourses: Course[] = [
+  {
+    id: 1,
+    title: 'Complete Web Development Bootcamp 2024',
+    instructor: 'Nguyen Van A',
+    thumbnail: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=1200',
+    rating: 4.8,
+    students: 12547,
+    price: 1500000,
+    categoryId: 'web-development',
+    categoryName: 'Web Development',
+    level: 'Beginner',
+    duration: '45 hours',
+    lessons: 250,
+    description: 'Build full-stack web apps with HTML, CSS, JavaScript, React, and Node.js.',
+    lastUpdated: '2024-01-12',
+    status: 'published',
+  },
+  {
+    id: 8,
+    title: 'Modern Frontend Engineering with React',
+    instructor: 'Mai Pham',
+    thumbnail: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1200',
+    rating: 4.7,
+    students: 8420,
+    price: 1700000,
+    categoryId: 'web-development',
+    categoryName: 'Web Development',
+    level: 'Intermediate',
+    duration: '38 hours',
+    lessons: 180,
+    description: 'Build modern UI systems with React, hooks, and component-driven design.',
+    lastUpdated: '2024-03-04',
+    status: 'published',
+  },
+  {
+    id: 2,
+    title: 'Data Science & Machine Learning Masterclass',
+    instructor: 'Linh Tran',
+    thumbnail: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200',
+    rating: 4.9,
+    students: 8934,
+    price: 2000000,
+    categoryId: 'data-science',
+    categoryName: 'Data Science',
+    level: 'Intermediate',
+    duration: '60 hours',
+    lessons: 180,
+    description: 'Master the full data science workflow with Python and scikit-learn.',
+    lastUpdated: '2024-01-20',
+    status: 'published',
+  },
+  {
+    id: 9,
+    title: 'Applied Machine Learning for Business',
+    instructor: 'Bao Nguyen',
+    thumbnail: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=1200',
+    rating: 4.8,
+    students: 6100,
+    price: 2200000,
+    categoryId: 'data-science',
+    categoryName: 'Data Science',
+    level: 'Advanced',
+    duration: '48 hours',
+    lessons: 150,
+    description: 'Use ML models to solve real business problems and drive decisions.',
+    lastUpdated: '2024-02-18',
+    status: 'published',
+  },
+  {
+    id: 3,
+    title: 'UI/UX Design: From Zero to Hero',
+    instructor: 'An Pham',
+    thumbnail: 'https://images.unsplash.com/photo-1561070791-2526d30994b5?w=1200',
+    rating: 4.7,
+    students: 6789,
+    price: 1200000,
+    categoryId: 'design',
+    categoryName: 'Design',
+    level: 'Beginner',
+    duration: '32 hours',
+    lessons: 120,
+    description: 'Learn UX research, wireframing, and high-fidelity UI design.',
+    lastUpdated: '2024-02-06',
+    status: 'published',
+  },
+  {
+    id: 10,
+    title: 'Product Design for SaaS Teams',
+    instructor: 'Hana Le',
+    thumbnail: 'https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=1200',
+    rating: 4.6,
+    students: 5120,
+    price: 1400000,
+    categoryId: 'design',
+    categoryName: 'Design',
+    level: 'Intermediate',
+    duration: '28 hours',
+    lessons: 96,
+    description: 'Design scalable product systems and collaborate with developers.',
+    lastUpdated: '2024-03-10',
+    status: 'published',
+  },
+  {
+    id: 5,
+    title: 'Business Strategy & Leadership Essentials',
+    instructor: 'Trang Vo',
+    thumbnail: 'https://images.unsplash.com/photo-1454165205744-3b78555e5572?w=1200',
+    rating: 4.7,
+    students: 7200,
+    price: 1700000,
+    categoryId: 'business',
+    categoryName: 'Business',
+    level: 'Intermediate',
+    duration: '40 hours',
+    lessons: 140,
+    description: 'Build strategic thinking and lead teams with confidence.',
+    lastUpdated: '2024-03-22',
+    status: 'published',
+  },
+  {
+    id: 11,
+    title: 'Entrepreneurship & Startup Operations',
+    instructor: 'Khanh Do',
+    thumbnail: 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200',
+    rating: 4.6,
+    students: 4300,
+    price: 1600000,
+    categoryId: 'business',
+    categoryName: 'Business',
+    level: 'Beginner',
+    duration: '30 hours',
+    lessons: 110,
+    description: 'Learn startup fundamentals, operations, and growth strategies.',
+    lastUpdated: '2024-02-14',
+    status: 'published',
+  },
+  {
+    id: 6,
+    title: 'Digital Marketing Growth Blueprint',
+    instructor: 'Lan Pham',
+    thumbnail: 'https://images.unsplash.com/photo-1432888498266-38ffec3eaf0a?w=1200',
+    rating: 4.8,
+    students: 7600,
+    price: 1300000,
+    categoryId: 'marketing',
+    categoryName: 'Marketing',
+    level: 'Beginner',
+    duration: '28 hours',
+    lessons: 95,
+    description: 'Master SEO, content, and paid acquisition to scale growth.',
+    lastUpdated: '2024-04-02',
+    status: 'published',
+  },
+  {
+    id: 12,
+    title: 'Performance Marketing Playbook',
+    instructor: 'Tung Nguyen',
+    thumbnail: 'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=1200',
+    rating: 4.7,
+    students: 5850,
+    price: 1500000,
+    categoryId: 'marketing',
+    categoryName: 'Marketing',
+    level: 'Intermediate',
+    duration: '34 hours',
+    lessons: 120,
+    description: 'Launch high-performing campaigns across paid channels.',
+    lastUpdated: '2024-03-19',
+    status: 'published',
+  },
+  {
+    id: 7,
+    title: 'Photography Masterclass: Light, Composition, Story',
+    instructor: 'Ha Vu',
+    thumbnail: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1200',
+    rating: 4.6,
+    students: 5200,
+    price: 1100000,
+    categoryId: 'photography',
+    categoryName: 'Photography',
+    level: 'Beginner',
+    duration: '25 hours',
+    lessons: 80,
+    description: 'Capture stunning images and edit like a pro.',
+    lastUpdated: '2024-02-28',
+    status: 'published',
+  },
+  {
+    id: 13,
+    title: 'Portrait Photography Essentials',
+    instructor: 'Nhi Nguyen',
+    thumbnail: 'https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?w=1200',
+    rating: 4.5,
+    students: 4100,
+    price: 1000000,
+    categoryId: 'photography',
+    categoryName: 'Photography',
+    level: 'Beginner',
+    duration: '20 hours',
+    lessons: 72,
+    description: 'Work with light and poses to shoot flattering portraits.',
+    lastUpdated: '2024-03-12',
+    status: 'published',
+  },
+];
+
 export default function CoursesPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const searchQuery = searchParams.get('search') ?? '';
+  const categoryQuery = searchParams.get('category') ?? '';
 
   const [searchTerm, setSearchTerm] = useState(searchQuery);
-  const [selectedCategory, setSelectedCategory] = useState('All Categories');
+  const [selectedCategory, setSelectedCategory] = useState(
+    categoryQuery || 'All Categories'
+  );
   const [selectedLevel, setSelectedLevel] = useState('All Levels');
   const [selectedDuration, setSelectedDuration] = useState('All Durations');
   const [selectedPrice, setSelectedPrice] = useState('All Prices');
@@ -89,10 +309,13 @@ export default function CoursesPage() {
   const [error, setError] = useState<string | null>(null);
 
   const directusUrl = process.env.NEXT_PUBLIC_DIRECTUS_URL || '';
-  const categoryOptions = useMemo(
-    () => ['All Categories', ...categories.map((cat) => cat.title)],
-    [categories]
-  );
+  const categoryOptions = useMemo(() => {
+    const options = ['All Categories', ...categories.map((cat) => cat.title)];
+    if (categoryQuery && !options.includes(categoryQuery)) {
+      options.splice(1, 0, categoryQuery);
+    }
+    return Array.from(new Set(options));
+  }, [categories, categoryQuery]);
 
   useEffect(() => {
     if (searchQuery !== searchTerm) {
@@ -101,8 +324,18 @@ export default function CoursesPage() {
   }, [searchQuery]);
 
   useEffect(() => {
+    if (categoryQuery) {
+      setSelectedCategory((prev) => (prev === categoryQuery ? prev : categoryQuery));
+      return;
+    }
+    setSelectedCategory((prev) => (prev === 'All Categories' ? prev : 'All Categories'));
+  }, [categoryQuery]);
+
+  useEffect(() => {
     const term = searchTerm.trim();
-    if (term === searchQuery) {
+    const category =
+      selectedCategory === 'All Categories' ? '' : selectedCategory;
+    if (term === searchQuery && category === categoryQuery) {
       return;
     }
 
@@ -111,12 +344,15 @@ export default function CoursesPage() {
       if (term) {
         params.set('search', term);
       }
+      if (category) {
+        params.set('category', category);
+      }
       const nextUrl = params.toString() ? `/courses?${params.toString()}` : '/courses';
       router.replace(nextUrl);
     }, 300);
 
     return () => clearTimeout(handler);
-  }, [searchTerm, searchQuery, router]);
+  }, [searchTerm, selectedCategory, searchQuery, categoryQuery, router]);
 
 
   useEffect(() => {
@@ -185,14 +421,24 @@ export default function CoursesPage() {
           };
         });
 
+        const normalizedCategoryTitles = new Set(
+          mappedCategories.map((category) => normalize(category.title))
+        );
+        const nextCategories = [
+          ...mappedCategories,
+          ...mockCategories.filter(
+            (category) => !normalizedCategoryTitles.has(normalize(category.title))
+          ),
+        ];
+
         if (!isActive) return;
-        setCategories(mappedCategories);
+        setCategories(nextCategories);
         setCourses(mappedCourses);
       } catch (err: any) {
         if (!isActive) return;
         console.error('Courses page load error:', err);
-        setError(err?.message || 'Unable to load courses.');
-        setCategories([]);
+        setError(null);
+        setCategories(mockCategories);
         setCourses([]);
       } finally {
         if (isActive) setLoading(false);
@@ -207,10 +453,36 @@ export default function CoursesPage() {
   }, [directusUrl, searchQuery]);
 
   // Filter courses
+  const normalizedRealCategories = useMemo(
+    () =>
+      new Set(
+        courses.map((course) => normalize(course.categoryName)).filter(Boolean)
+      ),
+    [courses]
+  );
+
+  const availableCourses = useMemo(() => {
+    const fallbackCourses = mockCourses.filter(
+      (course) => !normalizedRealCategories.has(normalize(course.categoryName))
+    );
+
+    return [...courses, ...fallbackCourses];
+  }, [courses, normalizedRealCategories]);
+
   const filteredCourses = useMemo(() => {
     const term = normalize(searchTerm);
+    const normalizedSelectedCategory = normalize(selectedCategory);
+    const hasExactRealCategoryMatch =
+      selectedCategory !== 'All Categories' &&
+      courses.some(
+        (course) => normalize(course.categoryName) === normalizedSelectedCategory
+      );
+    const allowSingleCategoryFallback =
+      selectedCategory !== 'All Categories' &&
+      !hasExactRealCategoryMatch &&
+      normalizedRealCategories.size === 1;
 
-    return courses.filter((course) => {
+    return availableCourses.filter((course) => {
       const matchesSearch =
         !term ||
         normalize(course.title).includes(term) ||
@@ -218,8 +490,12 @@ export default function CoursesPage() {
         normalize(course.instructor).includes(term) ||
         normalize(course.categoryName).includes(term);
 
+      const normalizedCourseCategory = normalize(course.categoryName);
       const matchesCategory =
-        selectedCategory === 'All Categories' || course.categoryName === selectedCategory;
+        selectedCategory === 'All Categories' ||
+        normalizedCourseCategory === normalizedSelectedCategory ||
+        (allowSingleCategoryFallback &&
+          normalizedRealCategories.has(normalizedCourseCategory));
       const matchesLevel = selectedLevel === 'All Levels' || course.level === selectedLevel;
 
       let matchesDuration = true;
@@ -246,7 +522,9 @@ export default function CoursesPage() {
       return matchesSearch && matchesCategory && matchesLevel && matchesDuration && matchesPrice;
     });
   }, [
+    availableCourses,
     courses,
+    normalizedRealCategories,
     searchTerm,
     selectedCategory,
     selectedLevel,

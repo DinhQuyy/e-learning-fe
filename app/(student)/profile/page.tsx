@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import {
   useEffect,
   useRef,
@@ -1125,9 +1126,10 @@ export default function ProfilePage() {
                 </h2>
                 <div className="grid gap-4 md:grid-cols-2">
                   {certificates.map((cert) => (
-                    <div
+                    <Link
                       key={cert.id}
-                      className="group overflow-hidden rounded-2xl border border-white/70 bg-white/80 shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl"
+                      href="/wishlist"
+                      className="group block overflow-hidden rounded-2xl border border-white/70 bg-white/80 shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl"
                     >
                       <div className="relative h-36 bg-gradient-to-br from-sky-500 via-teal-500 to-amber-400">
                         <img
@@ -1148,7 +1150,7 @@ export default function ProfilePage() {
                           {cert.issueDate}
                         </div>
                       </div>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               </div>
