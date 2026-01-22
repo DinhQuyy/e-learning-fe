@@ -40,7 +40,7 @@ export default function InstructorNavbar() {
               <BookOpen className="w-6 h-6" />
             </div>
             <div>
-              <div className="text-xl font-bold text-gray-900">EduPlatform</div>
+              <div className="text-xl font-bold text-gray-900">LearnHub</div>
               <div className="text-xs text-gray-500">Instructor</div>
             </div>
           </Link>

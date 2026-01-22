@@ -91,9 +91,9 @@ export default function ProfilePage() {
                 </div>
 
                 {/* Name & Actions */}
-                <div className="flex-1 pt-4">
-                  <div className="flex items-center justify-between mb-2">
-                    <div>
+                <div className="flex-1 w-full pt-4">
+                  <div className="flex flex-col items-start justify-between gap-3 mb-2 md:flex-row md:items-center">
+                    <div className="flex-1 min-w-0">
                       <h1 className="text-3xl font-bold text-gray-900">
                         {formData.name}
                       </h1>
@@ -102,7 +102,7 @@ export default function ProfilePage() {
                     {!isEditing && (
                       <button
                         onClick={() => setIsEditing(true)}
-                        className="flex items-center gap-2 px-6 py-2 font-semibold text-gray-700 transition-all border-2 border-gray-300 rounded-lg hover:border-blue-600 hover:text-blue-600"
+                        className="flex items-center gap-2 px-6 py-2 font-semibold text-gray-700 transition-all border-2 border-gray-300 rounded-lg hover:border-blue-600 hover:text-blue-600 whitespace-nowrap"
                       >
                         <Edit2 className="w-4 h-4" />
                         Chỉnh sửa
