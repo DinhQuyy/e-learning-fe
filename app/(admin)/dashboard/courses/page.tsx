@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ChangeEvent } from 'react';
 import { BookOpen, Plus, Search, Eye, Edit2, Trash2, X } from 'lucide-react';
 
 type Category = {
@@ -35,9 +35,12 @@ type Course = {
 
 type CourseForm = {
   title: string;
+  instructor: string;
   slug: string;
   description: string;
   price: number;
+  lessons: number;
+  duration: string;
   level: string | null;
   thumbnail: string | null;
   category: string | number | null; // gửi lên Directus
@@ -50,11 +53,26 @@ const normalize = (value: unknown) =>
     .normalize('NFD')
     .replace(/[\u0300-\u036f]/g, '');
 
+const slugify = (value: unknown) =>
+  normalize(value)
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+    .replace(/-{2,}/g, '-');
+
+const generateSlug = (title: string) => {
+  const base = slugify(title) || 'course';
+  const randomId = Math.random().toString(36).slice(2, 8);
+  return `${base}-${randomId}`;
+};
+
 const emptyForm: CourseForm = {
   title: '',
+  instructor: '',
   slug: '',
   description: '',
   price: 0,
+  lessons: 0,
+  duration: '',
   level: null,
   thumbnail: null,
   category: null,
@@ -218,9 +236,12 @@ export default function CoursesPage() {
 
     setForm({
       title: course.title ?? '',
+      instructor: course.instructor ?? '',
       slug: course.slug ?? '',
       description: course.description ?? '',
       price: Number(course.price ?? 0),
+      lessons: Number(course.lessons ?? 0),
+      duration: course.duration ?? '',
       level: course.level ?? null,
       thumbnail: course.thumbnail ?? null,
       category: course.categoryId ?? null,
@@ -275,10 +296,15 @@ export default function CoursesPage() {
   const handleCreate = async () => {
     try {
       setSaving(true);
+      const payload = {
+        ...form,
+        slug: form.slug || generateSlug(form.title),
+        teacher_name: form.instructor,
+      };
       const res = await fetch('/api/courses', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       });
       const json = await res.json().catch(() => null);
 
@@ -300,10 +326,15 @@ export default function CoursesPage() {
     try {
       setSaving(true);
 
+      const payload = {
+        ...form,
+        slug: form.slug || generateSlug(form.title),
+        teacher_name: form.instructor,
+      };
       const res = await fetch(`/api/courses/${selectedId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify(payload),
       });
       const json = await res.json().catch(() => null);
 
@@ -614,10 +645,81 @@ function CourseModal({
 }) {
   const isView = mode === 'view';
   const title = mode === 'create' ? 'Thêm khoá học' : mode === 'edit' ? 'Chỉnh sửa khoá học' : 'Xem khoá học';
+  const [thumbnailPreview, setThumbnailPreview] = useState<string | null>(null);
+  const [thumbnailUploading, setThumbnailUploading] = useState(false);
+  const [thumbnailError, setThumbnailError] = useState<string | null>(null);
+  const directusUrl = process.env.NEXT_PUBLIC_DIRECTUS_URL || '';
+  const currentThumbnailUrl = form.thumbnail
+    ? form.thumbnail.startsWith('http')
+      ? form.thumbnail
+      : directusUrl
+        ? `${directusUrl}/assets/${form.thumbnail}`
+        : ''
+    : '';
+  const displayThumbnailUrl = thumbnailPreview || currentThumbnailUrl;
 
+  useEffect(() => {
+    setThumbnailPreview(null);
+    setThumbnailError(null);
+    setThumbnailUploading(false);
+  }, [mode, course?.id]);
+
+  useEffect(() => {
+    return () => {
+      if (thumbnailPreview) {
+        URL.revokeObjectURL(thumbnailPreview);
+      }
+    };
+  }, [thumbnailPreview]);
+
+  const handleThumbnailChange = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = '';
+
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setThumbnailError('Please select an image file.');
+      return;
+    }
+
+    setThumbnailError(null);
+    setThumbnailUploading(true);
+    const previewUrl = URL.createObjectURL(file);
+    setThumbnailPreview(previewUrl);
+
+    try {
+      const body = new FormData();
+      body.append('file', file);
+
+      const res = await fetch('/api/courses/media', {
+        method: 'POST',
+        body,
+      });
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        throw new Error(data?.message || 'Upload failed.');
+      }
+
+      const fileId = data?.file?.id ?? data?.fileId ?? data?.id;
+
+      if (!fileId) {
+        throw new Error('Upload failed.');
+      }
+
+      setForm({ ...form, thumbnail: String(fileId) });
+    } catch (error) {
+      console.error('Upload thumbnail error:', error);
+      setThumbnailError(error instanceof Error ? error.message : 'Upload failed.');
+      setThumbnailPreview(null);
+    } finally {
+      setThumbnailUploading(false);
+    }
+  };
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40">
-      <div className="w-full max-w-2xl bg-white rounded-lg shadow-xl overflow-hidden">
+      <div className="flex w-full max-w-2xl max-h-[calc(100vh-2rem)] flex-col overflow-hidden rounded-lg bg-white shadow-xl">
         <div className="flex items-center justify-between p-5 border-b">
           <h2 className="text-lg font-bold">{title}</h2>
           <button onClick={onClose} className="p-2 rounded hover:bg-gray-100">
@@ -627,10 +729,15 @@ function CourseModal({
 
         {/* VIEW MODE */}
         {isView ? (
-          <div className="p-6 space-y-3">
+          <div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-3">
             <div className="text-sm">
               <div className="font-semibold text-gray-900">{course?.title ?? '—'}</div>
               <div className="text-gray-600 mt-1">Giá: ₫{Number(course?.price ?? 0).toLocaleString('vi-VN')}</div>
+              <div className="text-gray-600">Instructor: {course?.instructor ?? 'N/A'}</div>
+              <div className="text-gray-600">Students: {course?.students ?? 0}</div>
+              <div className="text-gray-600">Rating: {course?.rating ?? 0}</div>
+              <div className="text-gray-600">Lessons: {course?.lessons ?? 0}</div>
+              <div className="text-gray-600">Duration: {course?.duration ?? 'N/A'}</div>
               <div className="text-gray-600">Trạng thái: {course?.status ?? '—'}</div>
               <div className="text-gray-600">Danh mục: {course?.categoryName ?? '—'}</div>
               <div className="text-gray-600">Mô tả: {course?.description ?? '—'}</div>
@@ -651,7 +758,7 @@ function CourseModal({
         ) : (
           // CREATE / EDIT
           <form
-            className="p-6 space-y-4"
+            className="flex-1 min-h-0 overflow-y-auto p-6 space-y-4"
             onSubmit={(e) => {
               e.preventDefault();
               mode === 'create' ? onCreate() : onUpdate();
@@ -666,22 +773,42 @@ function CourseModal({
               />
             </Field>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <Field label="Slug">
-                <input
-                  value={form.slug}
-                  onChange={(e) => setForm({ ...form, slug: e.target.value })}
-                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </Field>
+            <Field label="Instructor">
+              <input
+                value={form.instructor}
+                onChange={(e) => setForm({ ...form, instructor: e.target.value })}
+                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </Field>
 
-              <Field label="Giá (VND)">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+<Field label="Giá (VND)">
                 <input
                   type="number"
                   value={form.price}
                   onChange={(e) => setForm({ ...form, price: Number(e.target.value) })}
                   className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   min={0}
+                />
+              </Field>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <Field label="Lessons">
+                <input
+                  type="number"
+                  value={form.lessons}
+                  onChange={(e) => setForm({ ...form, lessons: Number(e.target.value) })}
+                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  min={0}
+                />
+              </Field>
+
+              <Field label="Duration">
+                <input
+                  value={form.duration}
+                  onChange={(e) => setForm({ ...form, duration: e.target.value })}
+                  className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  placeholder="vd: 45 hours"
                 />
               </Field>
             </div>
@@ -723,12 +850,33 @@ function CourseModal({
               />
             </Field>
 
-            <Field label="Thumbnail (URL)">
-              <input
-                value={form.thumbnail ?? ''}
-                onChange={(e) => setForm({ ...form, thumbnail: e.target.value || null })}
-                className="w-full px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              />
+            <Field label="Thumbnail">
+              <div className="space-y-3">
+                {displayThumbnailUrl ? (
+                  <img
+                    src={displayThumbnailUrl}
+                    alt="Thumbnail preview"
+                    className="w-full max-h-48 rounded-lg object-cover border"
+                  />
+                ) : (
+                  <div className="flex h-32 items-center justify-center rounded-lg border border-dashed text-sm text-gray-500">
+                    No thumbnail uploaded
+                  </div>
+                )}
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleThumbnailChange}
+                  disabled={thumbnailUploading}
+                  className="w-full text-sm"
+                />
+                {thumbnailUploading && (
+                  <p className="text-sm text-gray-500">Uploading...</p>
+                )}
+                {thumbnailError && (
+                  <p className="text-sm text-red-600">{thumbnailError}</p>
+                )}
+              </div>
             </Field>
 
             <Field label="Mô tả">
@@ -752,7 +900,7 @@ function CourseModal({
               <button
                 type="submit"
                 className="px-4 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-60"
-                disabled={saving}
+                disabled={saving || thumbnailUploading}
               >
                 {saving ? 'Đang lưu...' : mode === 'create' ? 'Tạo mới' : 'Cập nhật'}
               </button>
@@ -763,3 +911,8 @@ function CourseModal({
     </div>
   );
 }
+
+
+
+
+

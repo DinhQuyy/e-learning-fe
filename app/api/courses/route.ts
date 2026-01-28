@@ -1,10 +1,16 @@
-// app/api/courses/route.ts
+﻿// app/api/courses/route.ts
 import { NextResponse } from "next/server";
 import { directusRequest } from "@/lib/directus";
 
 // GET /api/courses
-export async function GET() {
+export async function GET(req: Request) {
   try {
+    const { searchParams } = new URL(req.url);
+    const search = searchParams.get("search")?.trim();
+    const limitParam = searchParams.get("limit");
+    const limitValue = Number(limitParam);
+    const limit = Number.isFinite(limitValue) && limitValue > 0 ? String(limitValue) : "-1";
+
     // chỉ lấy field chắc chắn có
     const fields = [
        "id",
@@ -25,8 +31,17 @@ export async function GET() {
       "updated_at",
     ].join(",");
 
+    const query = new URLSearchParams();
+    query.set("limit", limit);
+    query.set("fields", fields);
+    if (search) {
+      query.set("filter[_or][0][title][_icontains]", search);
+      query.set("filter[_or][1][description][_icontains]", search);
+      query.set("filter[_or][2][teacher_name][_icontains]", search);
+    }
+
     const json = await directusRequest<{ data: any[] }>(
-      `/items/courses?limit=-1&fields=${encodeURIComponent(fields)}`
+      `/items/courses?${query.toString()}`
     );
 
     return NextResponse.json({ courses: json?.data ?? [] }, { status: 200 });

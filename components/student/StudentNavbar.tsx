@@ -1,8 +1,8 @@
-'use client';
+﻿'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import {
   GraduationCap,
   BookOpen,
@@ -14,16 +14,121 @@ import {
   LogOut,
   Settings,
   Award,
-  Heart,
-  Sparkles
+  Heart
 } from 'lucide-react';
 
 export default function StudentNavbar() {
   const pathname = usePathname();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const searchQuery = searchParams.get('search') ?? '';
   const [showMobileMenu, setShowMobileMenu] = useState(false);
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
+  const [courseSearch, setCourseSearch] = useState(searchQuery);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const [suggestions, setSuggestions] = useState<Array<{ id: string | number; title: string; instructor?: string }>>([]);
+  const [isSuggesting, setIsSuggesting] = useState(false);
+  const [user, setUser] = useState<{
+    first_name?: string;
+    last_name?: string;
+    email?: string;
+    display_name?: string;
+    name?: string;
+  } | null>(null);
+  const [isLoadingUser, setIsLoadingUser] = useState(true);
+
+  useEffect(() => {
+    let isActive = true;
+
+    const fetchUser = async () => {
+      try {
+        const res = await fetch('/api/auth/me', { cache: 'no-store' });
+        if (!res.ok) {
+          if (isActive) setUser(null);
+          return;
+        }
+        const json = await res.json();
+        if (isActive) setUser(json?.user ?? null);
+      } catch (error) {
+        console.error('Fetch user error:', error);
+      } finally {
+        if (isActive) setIsLoadingUser(false);
+      }
+    };
+
+    fetchUser();
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (pathname === '/courses') {
+      setCourseSearch(searchQuery);
+    }
+  }, [pathname, searchQuery]);
+
+  useEffect(() => {
+    const term = courseSearch.trim();
+    if (!showSuggestions || !term) {
+      setSuggestions([]);
+      setIsSuggesting(false);
+      return;
+    }
+
+    let isActive = true;
+    const controller = new AbortController();
+
+    const handler = setTimeout(async () => {
+      setIsSuggesting(true);
+      try {
+        const res = await fetch(
+          `/api/courses?search=${encodeURIComponent(term)}&limit=6`,
+          { cache: 'no-store', signal: controller.signal }
+        );
+        const data = await res.json().catch(() => null);
+        const items = Array.isArray(data?.courses)
+          ? data.courses
+          : Array.isArray(data?.data)
+            ? data.data
+            : [];
+        if (!isActive) return;
+        const mapped = items
+          .map((course: any) => ({
+            id: course.id,
+            title: course.title ?? course.name ?? '',
+            instructor:
+              course.teacher_name ?? course.instructor_name ?? course.instructor ?? '',
+          }))
+          .filter((course: any) => course.title);
+        setSuggestions(mapped.slice(0, 6));
+      } catch (error) {
+        if (!isActive) return;
+        setSuggestions([]);
+      } finally {
+        if (isActive) setIsSuggesting(false);
+      }
+    }, 250);
+
+    return () => {
+      isActive = false;
+      clearTimeout(handler);
+      controller.abort();
+    };
+  }, [courseSearch, showSuggestions]);
+
+  const displayName = [user?.first_name, user?.last_name]
+    .filter(Boolean)
+    .join(' ')
+    .trim();
+  const fallbackName = (user?.display_name || user?.name || '').trim();
+  const emailLocal =
+    user?.email ? user.email.split('@')[0] || user.email : '';
+  const userName = displayName || fallbackName || emailLocal || user?.email || 'Student';
+  const userEmail = user?.email || (isLoadingUser ? '...' : 'student@example.com');
+  const userInitial = (userName || 'S').charAt(0).toUpperCase();
 
   const notifications = [
     {
@@ -49,18 +154,42 @@ export default function StudentNavbar() {
     },
   ];
 
-  const handleLogout = () => {
-    // Clear cookies
-    document.cookie = 'access_token=; path=/; max-age=0';
-    document.cookie = 'student_token=; path=/; max-age=0';
-    
-    // Redirect to login
-    router.push('/login');
+  const handleCourseSearch = (value?: string) => {
+    const term = (value ?? courseSearch).trim();
+    const nextUrl = term ? `/courses?search=${encodeURIComponent(term)}` : '/courses';
+    router.push(nextUrl);
+    setShowSuggestions(false);
+    setShowNotifications(false);
+    setShowProfileMenu(false);
+    setShowMobileMenu(false);
+  };
+
+  const handleSuggestionSelect = (course: { id: string | number; title: string }) => {
+    setCourseSearch(course.title);
+    setShowSuggestions(false);
+    setShowNotifications(false);
+    setShowProfileMenu(false);
+    setShowMobileMenu(false);
+    router.push(`/courses/${course.id}`);
+  };
+
+  const handleLogout = async () => {
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' });
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+
+    setShowProfileMenu(false);
+    setShowNotifications(false);
+    setShowMobileMenu(false);
+    setShowSuggestions(false);
+    router.replace('/');
+    router.refresh();
   };
 
   const navLinks = [
     { href: '/my-learning', label: 'Học tập của tôi', icon: BookOpen },
-    { href: '/ai-assistant', label: 'AI Assistant', icon: Sparkles, highlight: true },
     { href: '/courses', label: 'Khám phá', icon: Search },
   ];
 
@@ -69,42 +198,30 @@ export default function StudentNavbar() {
       <div className="container px-4 mx-auto">
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 group">
-            <div className="relative">
-              <GraduationCap className="w-8 h-8 text-blue-600 transition-transform group-hover:scale-110 group-hover:rotate-12" />
-            </div>
+          <Link href="/" className="flex items-center gap-2">
+            <GraduationCap className="w-8 h-8 text-blue-600" />
             <span className="hidden text-2xl font-bold text-transparent bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text sm:block">
               LearnHub
             </span>
           </Link>
 
           {/* Desktop Navigation */}
-          <div className="items-center hidden gap-4 md:flex">
+          <div className="items-center hidden gap-6 md:flex">
             {navLinks.map((link) => {
               const Icon = link.icon;
               const isActive = pathname === link.href;
-              const isHighlight = link.highlight;
-              
               return (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`relative flex items-center gap-2 px-4 py-2 rounded-lg transition-all ${
-                    isHighlight
-                      ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold hover:shadow-lg hover:scale-105'
-                      : isActive
+                  className={`flex items-center gap-2 px-3 py-2 rounded-lg transition-colors ${
+                    isActive
                       ? 'text-blue-600 bg-blue-50 font-semibold'
                       : 'text-gray-700 hover:text-blue-600 hover:bg-gray-50'
                   }`}
                 >
-                  {isHighlight && (
-                    <span className="absolute flex w-3 h-3 -top-1 -right-1">
-                      <span className="absolute inline-flex w-full h-full bg-yellow-400 rounded-full opacity-75 animate-ping"></span>
-                      <span className="relative inline-flex w-3 h-3 bg-yellow-500 rounded-full"></span>
-                    </span>
-                  )}
                   <Icon className="w-5 h-5" />
-                  <span className="hidden lg:inline">{link.label}</span>
+                  {link.label}
                 </Link>
               );
             })}
@@ -114,13 +231,59 @@ export default function StudentNavbar() {
           <div className="flex items-center gap-4">
             {/* Search (Desktop) */}
             <div className="hidden lg:block">
-              <div className="relative group">
-                <Search className="absolute w-4 h-4 text-gray-400 transition-colors -translate-y-1/2 left-3 top-1/2 group-focus-within:text-blue-600" />
+              <div className="relative">
+                <Search className="absolute w-4 h-4 text-gray-400 -translate-y-1/2 left-3 top-1/2" />
                 <input
                   type="text"
                   placeholder="Tìm khóa học..."
-                  className="w-64 py-2 pr-4 text-sm transition-all border border-gray-300 rounded-lg pl-9 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  value={courseSearch}
+                  onChange={(event) => setCourseSearch(event.target.value)}
+                  onKeyDown={(event) => {
+                    if (event.key === 'Enter') {
+                      event.preventDefault();
+                      handleCourseSearch(event.currentTarget.value);
+                    }
+                  }}
+                  onFocus={() => setShowSuggestions(true)}
+                  onBlur={() => {
+                    setTimeout(() => setShowSuggestions(false), 150);
+                  }}
+                  className="w-64 py-2 pr-4 text-sm border border-gray-300 rounded-lg pl-9 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
+                {showSuggestions && courseSearch.trim() && (
+                  <div className="absolute left-0 right-0 z-20 mt-2 overflow-hidden bg-white border border-gray-200 rounded-lg shadow-lg">
+                    {isSuggesting ? (
+                      <div className="px-4 py-3 text-sm text-gray-500">
+                        Dang tim...
+                      </div>
+                    ) : suggestions.length ? (
+                      suggestions.map((course) => (
+                        <button
+                          key={course.id}
+                          type="button"
+                          onMouseDown={(event) => {
+                            event.preventDefault();
+                            handleSuggestionSelect(course);
+                          }}
+                          className="w-full px-4 py-2 text-left transition-colors hover:bg-gray-50"
+                        >
+                          <p className="text-sm font-semibold text-gray-900">
+                            {course.title}
+                          </p>
+                          {course.instructor ? (
+                            <p className="text-xs text-gray-500">
+                              {course.instructor}
+                            </p>
+                          ) : null}
+                        </button>
+                      ))
+                    ) : (
+                      <div className="px-4 py-3 text-sm text-gray-500">
+                        Khong tim thay khoa hoc
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
 
@@ -131,11 +294,11 @@ export default function StudentNavbar() {
                   setShowNotifications(!showNotifications);
                   setShowProfileMenu(false);
                 }}
-                className="relative p-2 text-gray-600 transition-all rounded-lg hover:text-gray-900 hover:bg-gray-100 hover:scale-105 active:scale-95"
+                className="relative p-2 text-gray-600 transition-colors rounded-lg hover:text-gray-900 hover:bg-gray-100"
               >
                 <Bell className="w-6 h-6" />
                 {notifications.some((n) => n.unread) && (
-                  <span className="absolute w-2 h-2 bg-red-500 rounded-full top-1 right-1 animate-pulse"></span>
+                  <span className="absolute w-2 h-2 bg-red-500 rounded-full top-1 right-1"></span>
                 )}
               </button>
 
@@ -146,7 +309,7 @@ export default function StudentNavbar() {
                     className="fixed inset-0 z-10"
                     onClick={() => setShowNotifications(false)}
                   ></div>
-                  <div className="absolute right-0 z-20 py-2 mt-2 bg-white border border-gray-200 rounded-lg shadow-xl w-80 animate-fade-in">
+                  <div className="absolute right-0 z-20 py-2 mt-2 bg-white border border-gray-200 rounded-lg shadow-xl w-80">
                     <div className="px-4 py-3 border-b border-gray-200">
                       <h3 className="font-semibold text-gray-900">Thông báo</h3>
                     </div>
@@ -178,7 +341,7 @@ export default function StudentNavbar() {
                       ))}
                     </div>
                     <div className="px-4 py-3 text-center border-t border-gray-200">
-                      <button className="text-sm font-semibold text-blue-600 transition-colors hover:text-blue-700">
+                      <button className="text-sm font-semibold text-blue-600 hover:text-blue-700">
                         Xem tất cả
                       </button>
                     </div>
@@ -194,13 +357,13 @@ export default function StudentNavbar() {
                   setShowProfileMenu(!showProfileMenu);
                   setShowNotifications(false);
                 }}
-                className="flex items-center gap-2 p-2 transition-all rounded-lg hover:bg-gray-100 hover:scale-105 active:scale-95"
+                className="flex items-center gap-2 p-2 transition-colors rounded-lg hover:bg-gray-100"
               >
                 <div className="flex items-center justify-center w-8 h-8 text-sm font-semibold text-white rounded-full bg-gradient-to-r from-blue-600 to-purple-600">
-                  S
+                  {userInitial}
                 </div>
                 <span className="hidden text-sm font-medium text-gray-700 md:block">
-                  Student
+                  {isLoadingUser ? '...' : userName}
                 </span>
               </button>
 
@@ -211,16 +374,17 @@ export default function StudentNavbar() {
                     className="fixed inset-0 z-10"
                     onClick={() => setShowProfileMenu(false)}
                   ></div>
-                  <div className="absolute right-0 z-20 w-56 py-2 mt-2 bg-white border border-gray-200 rounded-lg shadow-xl animate-fade-in">
+                  <div className="absolute right-0 z-20 w-56 py-2 mt-2 bg-white border border-gray-200 rounded-lg shadow-xl">
                     <div className="px-4 py-3 border-b border-gray-200">
-                      <p className="text-sm font-semibold text-gray-900">Student User</p>
-                      <p className="text-xs text-gray-500">student@example.com</p>
+                      <p className="text-sm font-semibold text-gray-900">
+                        {isLoadingUser ? '...' : userName}
+                      </p>
+                      <p className="text-xs text-gray-500">{userEmail}</p>
                     </div>
 
                     <Link
                       href="/profile"
                       className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-100"
-                      onClick={() => setShowProfileMenu(false)}
                     >
                       <User className="w-4 h-4" />
                       Hồ sơ của tôi
@@ -229,16 +393,14 @@ export default function StudentNavbar() {
                     <Link
                       href="/my-learning"
                       className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-100"
-                      onClick={() => setShowProfileMenu(false)}
                     >
                       <BookOpen className="w-4 h-4" />
                       Học tập của tôi
                     </Link>
 
                     <Link
-                      href="/certificates"
+                      href="/wishlist"
                       className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-100"
-                      onClick={() => setShowProfileMenu(false)}
                     >
                       <Award className="w-4 h-4" />
                       Chứng chỉ
@@ -247,7 +409,6 @@ export default function StudentNavbar() {
                     <Link
                       href="/wishlist"
                       className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-100"
-                      onClick={() => setShowProfileMenu(false)}
                     >
                       <Heart className="w-4 h-4" />
                       Yêu thích
@@ -256,7 +417,6 @@ export default function StudentNavbar() {
                     <Link
                       href="/settings"
                       className="flex items-center gap-3 px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-100"
-                      onClick={() => setShowProfileMenu(false)}
                     >
                       <Settings className="w-4 h-4" />
                       Cài đặt
@@ -279,7 +439,7 @@ export default function StudentNavbar() {
             {/* Mobile Menu Button */}
             <button
               onClick={() => setShowMobileMenu(!showMobileMenu)}
-              className="p-2 text-gray-600 transition-all md:hidden hover:text-gray-900 hover:scale-105 active:scale-95"
+              className="p-2 text-gray-600 md:hidden hover:text-gray-900"
             >
               {showMobileMenu ? (
                 <X className="w-6 h-6" />
@@ -292,7 +452,7 @@ export default function StudentNavbar() {
 
         {/* Mobile Menu */}
         {showMobileMenu && (
-          <div className="py-4 border-t border-gray-200 md:hidden animate-slide-down">
+          <div className="py-4 border-t border-gray-200 md:hidden">
             <div className="space-y-2">
               {/* Search Mobile */}
               <div className="px-2 mb-4">
@@ -301,24 +461,66 @@ export default function StudentNavbar() {
                   <input
                     type="text"
                     placeholder="Tìm khóa học..."
+                    value={courseSearch}
+                    onChange={(event) => setCourseSearch(event.target.value)}
+                    onKeyDown={(event) => {
+                      if (event.key === 'Enter') {
+                        event.preventDefault();
+                        handleCourseSearch(event.currentTarget.value);
+                      }
+                    }}
+                    onFocus={() => setShowSuggestions(true)}
+                    onBlur={() => {
+                      setTimeout(() => setShowSuggestions(false), 150);
+                    }}
                     className="w-full py-2 pr-4 text-sm border border-gray-300 rounded-lg pl-9 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
+                  {showSuggestions && courseSearch.trim() && (
+                    <div className="absolute left-0 right-0 z-20 mt-2 overflow-hidden bg-white border border-gray-200 rounded-lg shadow-lg">
+                      {isSuggesting ? (
+                        <div className="px-4 py-3 text-sm text-gray-500">
+                          Dang tim...
+                        </div>
+                      ) : suggestions.length ? (
+                        suggestions.map((course) => (
+                          <button
+                            key={course.id}
+                            type="button"
+                            onMouseDown={(event) => {
+                              event.preventDefault();
+                              handleSuggestionSelect(course);
+                            }}
+                            className="w-full px-4 py-2 text-left transition-colors hover:bg-gray-50"
+                          >
+                            <p className="text-sm font-semibold text-gray-900">
+                              {course.title}
+                            </p>
+                            {course.instructor ? (
+                              <p className="text-xs text-gray-500">
+                                {course.instructor}
+                              </p>
+                            ) : null}
+                          </button>
+                        ))
+                      ) : (
+                        <div className="px-4 py-3 text-sm text-gray-500">
+                          Khong tim thay khoa hoc
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
 
               {navLinks.map((link) => {
                 const Icon = link.icon;
                 const isActive = pathname === link.href;
-                const isHighlight = link.highlight;
-                
                 return (
                   <Link
                     key={link.href}
                     href={link.href}
                     className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                      isHighlight
-                        ? 'bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold'
-                        : isActive
+                      isActive
                         ? 'text-blue-600 bg-blue-50 font-semibold'
                         : 'text-gray-700 hover:bg-gray-50'
                     }`}
@@ -326,11 +528,6 @@ export default function StudentNavbar() {
                   >
                     <Icon className="w-5 h-5" />
                     {link.label}
-                    {isHighlight && (
-                      <span className="ml-auto text-xs bg-yellow-400 text-yellow-900 px-2 py-0.5 rounded-full font-bold">
-                        NEW
-                      </span>
-                    )}
                   </Link>
                 );
               })}
@@ -338,38 +535,6 @@ export default function StudentNavbar() {
           </div>
         )}
       </div>
-
-      <style jsx>{`
-        @keyframes fade-in {
-          from {
-            opacity: 0;
-            transform: translateY(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        @keyframes slide-down {
-          from {
-            opacity: 0;
-            transform: translateY(-10px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        .animate-fade-in {
-          animation: fade-in 0.2s ease-out forwards;
-        }
-
-        .animate-slide-down {
-          animation: slide-down 0.3s ease-out forwards;
-        }
-      `}</style>
     </nav>
   );
 }

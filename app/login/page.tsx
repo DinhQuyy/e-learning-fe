@@ -1,20 +1,47 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import AuthCard from "../../components/AuthCard";
 import FormInput from "../../components/FormInput";
 import Button from "../../components/Button";
+import {
+  findRememberedAccount,
+  getRememberedAccounts,
+  removeRememberedAccount,
+  upsertRememberedAccount,
+  RememberedAccount,
+} from "@/lib/remembered-accounts";
 
 export default function LoginPage() {
   const router = useRouter();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
+  const [rememberedAccounts, setRememberedAccounts] = useState<RememberedAccount[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState("");
+  const [forgotError, setForgotError] = useState<string | null>(null);
+  const [forgotSuccess, setForgotSuccess] = useState<string | null>(null);
+  const [forgotLoading, setForgotLoading] = useState(false);
 
+
+
+  useEffect(() => {
+    setRememberedAccounts(getRememberedAccounts());
+  }, []);
+
+  useEffect(() => {
+    const matched = findRememberedAccount(email);
+    if (matched) {
+      setPassword(matched.password);
+      setRememberMe(true);
+    }
+  }, [email]);
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
     setError(null);
@@ -30,7 +57,7 @@ export default function LoginPage() {
       const res = await fetch("/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password, remember: rememberMe }),
       });
 
       const data = await res.json().catch(() => null);
@@ -40,17 +67,15 @@ export default function LoginPage() {
         return;
       }
 
-      // ✅ Đăng nhập thành công
-      // Save token if in real mode
-      if (data.data?.access_token) {
-        document.cookie = `access_token=${data.data.access_token}; path=/; max-age=3600`;
-      } else if (data.mock) {
-        // Mock mode - set mock token
-        document.cookie = `access_token=mock-student-token; path=/; max-age=3600`;
+      // ✅ Đăng nhập thành công: chuyển sang dashboard (hoặc trang chủ)
+      if (rememberMe) {
+        upsertRememberedAccount({ email, password });
+      } else {
+        removeRememberedAccount(email);
       }
+      setRememberedAccounts(getRememberedAccounts());
 
-      // Redirect to my learning
-      router.push("/my-learning");
+      router.push("/my-learning"); // nếu chưa có thì tạm đổi thành "/"
     } catch (err) {
       console.error(err);
       setError("Không thể kết nối tới server");
@@ -58,6 +83,56 @@ export default function LoginPage() {
       setLoading(false);
     }
   };
+
+  const openForgotPassword = () => {
+    setForgotEmail(email);
+    setForgotError(null);
+    setForgotSuccess(null);
+    setShowForgotPassword(true);
+  };
+
+  const closeForgotPassword = () => {
+    setShowForgotPassword(false);
+    setForgotError(null);
+    setForgotSuccess(null);
+  };
+
+  const handleForgotPassword = async (event: FormEvent) => {
+    event.preventDefault();
+    setForgotError(null);
+    setForgotSuccess(null);
+
+    if (!forgotEmail) {
+      setForgotError("Vui lòng nhập email.");
+      return;
+    }
+
+    try {
+      setForgotLoading(true);
+      const res = await fetch("/api/auth/forgot-password", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: forgotEmail }),
+      });
+
+      const data = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        setForgotError(data?.message || "Không thể gửi yêu cầu quên mật khẩu.");
+        return;
+      }
+
+      setForgotSuccess(
+        "Nếu email tồn tại, chúng tôi đã gửi hướng dẫn đặt lại mật khẩu."
+      );
+    } catch (err) {
+      console.error(err);
+      setForgotError("Không thể kết nối tới server.");
+    } finally {
+      setForgotLoading(false);
+    }
+  };
+
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-gray-900">
@@ -69,9 +144,15 @@ export default function LoginPage() {
             type="email"
             placeholder="Nhập email của bạn"
             value={email}
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e: any) => setEmail(e.target.value)}
+            list="remembered-email-list"
+            autoComplete="email"
           />
-
+          <datalist id="remembered-email-list">
+            {rememberedAccounts.map((account) => (
+              <option key={account.email} value={account.email} />
+            ))}
+          </datalist>
           <FormInput
             label="Mật khẩu"
             name="password"
@@ -80,6 +161,24 @@ export default function LoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
           />
+          <div className="flex items-center justify-between mt-2 text-sm text-gray-400">
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="w-4 h-4 text-blue-500 bg-gray-800 border-gray-600 rounded focus:ring-blue-500"
+              />
+              Ghi nhớ mật khẩu
+            </label>
+            <button
+              type="button"
+              onClick={openForgotPassword}
+              className="text-blue-400 hover:underline"
+            >
+              Quên mật khẩu?
+            </button>
+          </div>
 
           {error && (
             <p className="mt-2 text-sm text-center text-red-500">{error}</p>
@@ -97,6 +196,69 @@ export default function LoginPage() {
           </p>
         </form>
       </AuthCard>
+
+
+{showForgotPassword && (
+  <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-8">
+    <div
+      className="absolute inset-0 bg-black/60"
+      onClick={closeForgotPassword}
+    />
+    <div
+      className="relative w-full max-w-md"
+      onClick={(event) => event.stopPropagation()}
+    >
+      <button
+        type="button"
+        onClick={closeForgotPassword}
+        className="absolute z-10 px-3 py-1 text-sm text-gray-600 bg-white rounded-full shadow right-4 top-4 hover:text-gray-900"
+      >
+        X
+      </button>
+      <AuthCard title="Quên mật khẩu">
+        <form onSubmit={handleForgotPassword}>
+          <FormInput
+            label="Email"
+            name="forgot_email"
+            type="email"
+            placeholder="Nhập email của bạn"
+            value={forgotEmail}
+            onChange={(event) => setForgotEmail(event.target.value)}
+          />
+
+          {forgotError && (
+            <p className="mt-2 text-sm text-center text-red-500">
+              {forgotError}
+            </p>
+          )}
+          {forgotSuccess && (
+            <p className="mt-2 text-sm text-center text-green-500">
+              {forgotSuccess}
+            </p>
+          )}
+
+          <button
+            type="submit"
+            disabled={forgotLoading}
+            className="w-full py-2 mt-4 text-white transition bg-blue-600 rounded-lg hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70"
+          >
+            {forgotLoading ? "Đang gửi..." : "Gửi yêu cầu"}
+          </button>
+
+          <p className="mt-4 text-sm text-center text-gray-400">
+            <button
+              type="button"
+              onClick={closeForgotPassword}
+              className="text-blue-400 hover:underline"
+            >
+              Quay lại đăng nhập
+            </button>
+          </p>
+        </form>
+      </AuthCard>
+    </div>
+  </div>
+)}
     </div>
   );
 }

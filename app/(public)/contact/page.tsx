@@ -1,128 +1,144 @@
-"use client";
-import { useState } from 'react';
+import Link from 'next/link';
 import {
-  Mail,
-  Phone,
-  MapPin,
   Clock,
+  Mail,
+  MapPin,
+  MessageCircle,
+  Phone,
   Send,
-  MessageSquare,
-  HelpCircle,
-  Users
 } from 'lucide-react';
 
+const contactCards = [
+  {
+    title: 'Email',
+    detail: 'support@learnhub.vn',
+    description: 'Gửi email để được hỗ trợ nhanh chóng.',
+    icon: Mail,
+  },
+  {
+    title: 'Hotline',
+    detail: '1900 123 456',
+    description: 'Hỗ trợ 24/7 tất cả ngày trong tuần.',
+    icon: Phone,
+  },
+  {
+    title: 'Văn phòng',
+    detail: '89 Nguyễn Huệ, Quận 1, TP.HCM',
+    description: 'Ghé thăm chúng tôi trong giờ hành chính.',
+    icon: MapPin,
+  },
+  {
+    title: 'Giờ làm việc',
+    detail: '08:30 - 18:00 (Thứ 2 - Thứ 6)',
+    description: 'Luôn sẵn sàng hỗ trợ bạn.',
+    icon: Clock,
+  },
+];
+
+const faqs = [
+  {
+    question: 'Tôi có thể học thử trước khi đăng ký không?',
+    answer: 'Có. Nhiều khóa học có bài học miễn phí để bạn trải nghiệm.',
+  },
+  {
+    question: 'Thời hạn truy cập khóa học là bao lâu?',
+    answer: 'Bạn có thể truy cập trọn đời sau khi đăng ký thành công.',
+  },
+  {
+    question: 'Tôi cần hỗ trợ kỹ thuật thì làm thế nào?',
+    answer: 'Gửi email hoặc chat trực tiếp, đội ngũ sẽ phản hồi trong 24 giờ.',
+  },
+];
+
 export default function ContactPage() {
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    subject: '',
-    message: ''
-  });
-
-  const contactInfo = [
-    {
-      icon: MapPin,
-      title: 'Địa chỉ',
-      content: '123 Đường ABC, Quận 1, TP.HCM, Việt Nam',
-      color: 'blue'
-    },
-    {
-      icon: Phone,
-      title: 'Số điện thoại',
-      content: '(+84) 123 456 789',
-      link: 'tel:+84123456789',
-      color: 'green'
-    },
-    {
-      icon: Mail,
-      title: 'Email',
-      content: 'contact@learnhub.vn',
-      link: 'mailto:contact@learnhub.vn',
-      color: 'purple'
-    },
-    {
-      icon: Clock,
-      title: 'Giờ làm việc',
-      content: 'T2 - T6: 9:00 - 18:00',
-      color: 'orange'
-    }
-  ];
-
-  const quickHelp = [
-    {
-      icon: MessageSquare,
-      title: 'Chat trực tiếp',
-      description: 'Trò chuyện với đội hỗ trợ của chúng tôi',
-      action: 'Bắt đầu chat'
-    },
-    {
-      icon: HelpCircle,
-      title: 'Trung tâm hỗ trợ',
-      description: 'Tìm câu trả lời cho các câu hỏi thường gặp',
-      action: 'Xem FAQ'
-    },
-    {
-      icon: Users,
-      title: 'Cộng đồng',
-      description: 'Tham gia cộng đồng học viên',
-      action: 'Tham gia ngay'
-    }
-  ];
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    alert('Cảm ơn bạn đã liên hệ! Chúng tôi sẽ phản hồi trong vòng 24 giờ.');
-    setFormData({
-      name: '',
-      email: '',
-      phone: '',
-      subject: '',
-      message: ''
-    });
-  };
-
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Hero Section */}
-      <section className="py-20 text-white bg-gradient-to-r from-blue-600 to-purple-600">
-        <div className="container px-4 mx-auto">
-          <div className="max-w-3xl mx-auto text-center">
-            <h1 className="mb-6 text-5xl font-bold">Liên hệ với chúng tôi</h1>
-            <p className="text-xl text-blue-100">
-              Chúng tôi luôn sẵn sàng lắng nghe và hỗ trợ bạn. 
-              Hãy để lại thông tin và chúng tôi sẽ phản hồi sớm nhất.
-            </p>
+    <div className="min-h-screen bg-white">
+      <section className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-purple-50">
+        <div className="container px-4 py-16 mx-auto md:py-24">
+          <div className="grid items-center gap-10 lg:grid-cols-2">
+            <div className="space-y-6">
+              <span className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-blue-700 bg-blue-100 rounded-full">
+                <MessageCircle className="w-4 h-4" />
+                Hỗ trợ nhanh - phản hồi trong 24 giờ
+              </span>
+              <h1 className="text-4xl font-bold text-gray-900 md:text-5xl">
+                Liên hệ với LearnHub
+              </h1>
+              <p className="text-lg leading-relaxed text-gray-600">
+                Chúng tôi luôn sẵn sàng lắng nghe câu hỏi, góp ý hoặc đề xuất hợp
+                tác từ bạn. Hãy để lại thông tin, đội ngũ LearnHub sẽ kết nối ngay.
+              </p>
+              <div className="flex flex-wrap gap-4">
+                <Link
+                  href="/about"
+                  className="inline-flex items-center gap-2 px-6 py-3 font-semibold text-gray-700 transition border-2 border-gray-300 rounded-xl hover:border-blue-600 hover:text-blue-600"
+                >
+                  Tìm hiểu về LearnHub
+                </Link>
+                <Link
+                  href="/courses"
+                  className="inline-flex items-center gap-2 px-6 py-3 font-semibold text-white transition rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 hover:shadow-lg"
+                >
+                  Xem khóa học
+                </Link>
+              </div>
+            </div>
+            <div className="relative">
+              <div className="p-6 border border-blue-100 shadow-xl rounded-3xl bg-white/80 backdrop-blur">
+                <div className="space-y-4">
+                  <div className="flex items-center gap-3 p-4 rounded-2xl bg-blue-50">
+                    <Send className="w-6 h-6 text-blue-600" />
+                    <div>
+                      <p className="text-sm text-gray-600">Email phản hồi</p>
+                      <p className="font-semibold text-gray-900">
+                        hello@learnhub.vn
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 p-4 rounded-2xl bg-purple-50">
+                    <Phone className="w-6 h-6 text-purple-600" />
+                    <div>
+                      <p className="text-sm text-gray-600">Hotline ưu tiên</p>
+                      <p className="font-semibold text-gray-900">
+                        028 7300 9988
+                      </p>
+                    </div>
+                  </div>
+                  <div className="p-4 text-sm text-gray-600 bg-white border border-gray-200 border-dashed rounded-2xl">
+                    Đội ngũ chăm sóc học viên sẽ xác nhận yêu cầu của bạn trong
+                    vòng 24 giờ làm việc.
+                  </div>
+                </div>
+              </div>
+              <div className="absolute w-40 h-40 rounded-full -bottom-8 -left-8 bg-blue-200/40 blur-3xl" />
+              <div className="absolute w-40 h-40 rounded-full -right-8 top-10 bg-purple-200/40 blur-3xl" />
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Contact Info Cards */}
-      <section className="py-16">
+      <section className="py-12 border-y bg-gray-50">
         <div className="container px-4 mx-auto">
-          <div className="grid gap-6 mb-16 md:grid-cols-2 lg:grid-cols-4 -mt-28">
-            {contactInfo.map((info, index) => {
-              const Icon = info.icon;
-              const colors = {
-                blue: 'bg-blue-100 text-blue-600',
-                green: 'bg-green-100 text-green-600',
-                purple: 'bg-purple-100 text-purple-600',
-                orange: 'bg-orange-100 text-orange-600'
-              };
-
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            {contactCards.map((card) => {
+              const Icon = card.icon;
               return (
-                <div key={index} className="p-6 transition-shadow bg-white shadow-lg rounded-xl hover:shadow-xl">
-                  <div className={`inline-flex items-center justify-center w-12 h-12 rounded-full mb-4 ${colors[info.color as keyof typeof colors]}`}>
+                <div
+                  key={card.title}
+                  className="p-6 bg-white border border-gray-200 shadow-sm rounded-2xl"
+                >
+                  <div className="inline-flex p-3 mb-4 text-blue-600 bg-blue-100 rounded-xl">
                     <Icon className="w-6 h-6" />
                   </div>
-                  <h3 className="mb-2 font-bold text-gray-900">{info.title}</h3>
-                  {info.link ? (
-                    <a href={info.link} className="text-gray-600 transition-colors hover:text-blue-600">
-                      {info.content}
-                    </a>
-                  ) : (
-                    <p className="text-gray-600">{info.content}</p>
-                  )}
+                  <h3 className="text-lg font-semibold text-gray-900">
+                    {card.title}
+                  </h3>
+                  <p className="mt-1 font-medium text-gray-800">
+                    {card.detail}
+                  </p>
+                  <p className="mt-2 text-sm text-gray-600">
+                    {card.description}
+                  </p>
                 </div>
               );
             })}
@@ -130,179 +146,105 @@ export default function ContactPage() {
         </div>
       </section>
 
-      {/* Main Content */}
-      <section className="pb-20">
+      <section className="py-16">
         <div className="container px-4 mx-auto">
-          <div className="grid gap-8 lg:grid-cols-3">
-            {/* Contact Form */}
-            <div className="lg:col-span-2">
-              <div className="p-8 bg-white shadow-lg rounded-xl">
-                <h2 className="mb-6 text-3xl font-bold text-gray-900">
-                  Gửi tin nhắn cho chúng tôi
-                </h2>
-                <div className="space-y-6">
-                  <div className="grid gap-6 md:grid-cols-2">
-                    <div>
-                      <label className="block mb-2 text-sm font-semibold text-gray-700">
-                        Họ và tên *
-                      </label>
-                      <input
-                        type="text"
-                        value={formData.name}
-                        onChange={(e) => setFormData({...formData, name: e.target.value})}
-                        placeholder="Nguyễn Văn A"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        required
-                      />
-                    </div>
-                    <div>
-                      <label className="block mb-2 text-sm font-semibold text-gray-700">
-                        Email *
-                      </label>
-                      <input
-                        type="email"
-                        value={formData.email}
-                        onChange={(e) => setFormData({...formData, email: e.target.value})}
-                        placeholder="email@example.com"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        required
-                      />
-                    </div>
-                  </div>
-
-                  <div className="grid gap-6 md:grid-cols-2">
-                    <div>
-                      <label className="block mb-2 text-sm font-semibold text-gray-700">
-                        Số điện thoại
-                      </label>
-                      <input
-                        type="tel"
-                        value={formData.phone}
-                        onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                        placeholder="0123 456 789"
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block mb-2 text-sm font-semibold text-gray-700">
-                        Chủ đề *
-                      </label>
-                      <select
-                        value={formData.subject}
-                        onChange={(e) => setFormData({...formData, subject: e.target.value})}
-                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                        required
-                      >
-                        <option value="">Chọn chủ đề</option>
-                        <option value="general">Câu hỏi chung</option>
-                        <option value="course">Về khóa học</option>
-                        <option value="technical">Hỗ trợ kỹ thuật</option>
-                        <option value="partnership">Hợp tác</option>
-                        <option value="other">Khác</option>
-                      </select>
-                    </div>
-                  </div>
-
+          <div className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr]">
+            <div className="p-8 bg-white border border-gray-200 shadow-sm rounded-3xl">
+              <h2 className="text-3xl font-bold text-gray-900">
+                Gửi yêu cầu cho chúng tôi
+              </h2>
+              <p className="mt-3 text-gray-600">
+                Điền thông tin dưới đây để đội ngũ LearnHub hỗ trợ bạn nhanh nhất.
+              </p>
+              <form className="mt-6 space-y-4">
+                <div className="grid gap-4 md:grid-cols-2">
                   <div>
-                    <label className="block mb-2 text-sm font-semibold text-gray-700">
-                      Tin nhắn *
+                    <label className="text-sm font-semibold text-gray-700">
+                      Họ và tên
                     </label>
-                    <textarea
-                      value={formData.message}
-                      onChange={(e) => setFormData({...formData, message: e.target.value})}
-                      placeholder="Nhập nội dung tin nhắn của bạn..."
-                      rows={6}
-                      className="w-full px-4 py-3 border border-gray-300 rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      required
+                    <input
+                      type="text"
+                      placeholder="Nguyễn Văn A"
+                      className="w-full px-4 py-3 mt-2 border border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none"
                     />
                   </div>
-
-                  <button
-                    onClick={handleSubmit}
-                    className="flex items-center justify-center w-full gap-2 px-8 py-4 font-semibold text-white transition-all rounded-lg md:w-auto bg-gradient-to-r from-blue-600 to-purple-600 hover:shadow-xl"
-                  >
-                    <Send className="w-5 h-5" />
-                    Gửi tin nhắn
-                  </button>
+                  <div>
+                    <label className="text-sm font-semibold text-gray-700">
+                      Email
+                    </label>
+                    <input
+                      type="email"
+                      placeholder="email@example.com"
+                      className="w-full px-4 py-3 mt-2 border border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none"
+                    />
+                  </div>
                 </div>
-              </div>
-            </div>
-
-            {/* Quick Help Sidebar */}
-            <div className="space-y-6">
-              <div className="p-6 bg-white shadow-lg rounded-xl">
-                <h3 className="mb-4 text-xl font-bold text-gray-900">
-                  Hỗ trợ nhanh
-                </h3>
-                <div className="space-y-4">
-                  {quickHelp.map((item, index) => {
-                    const Icon = item.icon;
-                    return (
-                      <div key={index} className="p-4 transition-colors border border-gray-200 rounded-lg hover:border-blue-500">
-                        <div className="flex items-start gap-3 mb-3">
-                          <div className="flex items-center justify-center flex-shrink-0 w-10 h-10 bg-blue-100 rounded-lg">
-                            <Icon className="w-5 h-5 text-blue-600" />
-                          </div>
-                          <div>
-                            <h4 className="mb-1 font-semibold text-gray-900">
-                              {item.title}
-                            </h4>
-                            <p className="text-sm text-gray-600">
-                              {item.description}
-                            </p>
-                          </div>
-                        </div>
-                        <button className="w-full text-sm font-semibold text-center text-blue-600 hover:text-blue-700">
-                          {item.action} →
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Map */}
-              <div className="overflow-hidden bg-white shadow-lg rounded-xl">
-                <div className="h-64 bg-gray-200">
-                  <iframe
-                    src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3919.4967826873936!2d106.69522831533431!3d10.775394392321492!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31752f4b3330bcc9%3A0xb55e9d1c59091db7!2sHCMC!5e0!3m2!1sen!2s!4v1234567890123!5m2!1sen!2s"
-                    width="100%"
-                    height="100%"
-                    style={{ border: 0 }}
-                    allowFullScreen
-                    loading="lazy"
+                <div>
+                  <label className="text-sm font-semibold text-gray-700">
+                    Chủ đề
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="Bạn cần hỗ trợ về khóa học, thanh toán..."
+                    className="w-full px-4 py-3 mt-2 border border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none"
                   />
                 </div>
-                <div className="p-4">
-                  <h4 className="mb-1 font-semibold text-gray-900">
-                    Văn phòng LearnHub
-                  </h4>
-                  <p className="text-sm text-gray-600">
-                    123 Đường ABC, Quận 1, TP.HCM
-                  </p>
+                <div>
+                  <label className="text-sm font-semibold text-gray-700">
+                    Nội dung
+                  </label>
+                  <textarea
+                    rows={5}
+                    placeholder="Mô tả chi tiết yêu cầu của bạn"
+                    className="w-full px-4 py-3 mt-2 border border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none"
+                  />
+                </div>
+                <button
+                  type="button"
+                  className="inline-flex items-center gap-2 px-6 py-3 font-semibold text-white transition rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 hover:shadow-lg"
+                >
+                  Gửi yêu cầu
+                  <Send className="w-4 h-4" />
+                </button>
+              </form>
+            </div>
+
+            <div className="space-y-6">
+              <div className="p-6 border border-gray-200 rounded-3xl bg-gray-50">
+                <h3 className="text-xl font-semibold text-gray-900">
+                  Bản đồ văn phòng
+                </h3>
+                <p className="mt-2 text-sm text-gray-600">
+                  Bản đồ đang được cập nhật. Bạn có thể liên hệ hotline để được
+                  hướng dẫn đường đi nhanh nhất.
+                </p>
+                <div className="flex items-center justify-center h-48 mt-4 text-sm text-gray-500 bg-white border border-gray-300 border-dashed rounded-2xl">
+                  Khu vực hiển thị bản đồ
                 </div>
               </div>
-            </div>
-          </div>
-        </div>
-      </section>
 
-      {/* FAQ Preview */}
-      <section className="py-16 bg-white">
-        <div className="container px-4 mx-auto">
-          <div className="max-w-4xl mx-auto text-center">
-            <h2 className="mb-4 text-3xl font-bold text-gray-900">
-              Câu hỏi thường gặp
-            </h2>
-            <p className="mb-8 text-gray-600">
-              Có thể bạn sẽ tìm thấy câu trả lời tại đây
-            </p>
-            <a
-              href="/faq"
-              className="inline-flex items-center gap-2 px-6 py-3 font-semibold text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700"
-            >
-              Xem tất cả FAQ
-            </a>
+              <div className="p-6 bg-white border border-gray-200 shadow-sm rounded-3xl">
+                <h3 className="text-xl font-semibold text-gray-900">
+                  Câu hỏi thường gặp
+                </h3>
+                <div className="mt-4 space-y-4">
+                  {faqs.map((faq) => (
+                    <div key={faq.question} className="p-4 rounded-2xl bg-gray-50">
+                      <p className="font-semibold text-gray-900">
+                        {faq.question}
+                      </p>
+                      <p className="mt-2 text-sm text-gray-600">{faq.answer}</p>
+                    </div>
+                  ))}
+                </div>
+                <Link
+                  href="/courses"
+                  className="inline-flex items-center gap-2 mt-5 text-sm font-semibold text-blue-600 hover:text-blue-700"
+                >
+                  Xem thêm tài nguyên học tập
+                </Link>
+              </div>
+            </div>
           </div>
         </div>
       </section>

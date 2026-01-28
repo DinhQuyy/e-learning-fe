@@ -1,13 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { 
+import { useEffect, useState } from 'react';
+import {
   GraduationCap, 
   BookOpen, 
   Users, 
   TrendingUp,
-  Search,
   Star,
   Clock,
   PlayCircle,
@@ -17,6 +16,8 @@ import {
   ArrowRight,
   CheckCircle2
 } from 'lucide-react';
+import HeroCourseSearch from '@/components/public/HeroCourseSearch';
+import { usePublicSettings } from '@/lib/public-settings.client';
 
 // Mock data
 const featuredCourses = [
@@ -71,102 +72,117 @@ const featuredCourses = [
 ];
 
 const categories = [
-  { name: 'Web Development', icon: '💻', courses: 245 },
-  { name: 'Data Science', icon: '📊', courses: 189 },
-  { name: 'Design', icon: '🎨', courses: 156 },
-  { name: 'Business', icon: '💼', courses: 203 },
-  { name: 'Marketing', icon: '📱', courses: 167 },
-  { name: 'Photography', icon: '📷', courses: 134 },
+  { name: 'Web Development', slug: 'web-development', icon: '💻', courses: 245 },
+  { name: 'Data Science', slug: 'data-science', icon: '📊', courses: 189 },
+  { name: 'Design', slug: 'design', icon: '🎨', courses: 156 },
+  { name: 'Business', slug: 'business', icon: '💼', courses: 203 },
+  { name: 'Marketing', slug: 'marketing', icon: '📱', courses: 167 },
+  { name: 'Photography', slug: 'photography', icon: '📷', courses: 134 },
 ];
 
-const stats = [
-  { icon: Users, label: 'Học viên', value: '50,000+' },
-  { icon: BookOpen, label: 'Khóa học', value: '1,200+' },
-  { icon: GraduationCap, label: 'Giảng viên', value: '500+' },
-  { icon: Award, label: 'Chứng chỉ', value: '30,000+' },
-];
-
-const features = [
-  {
-    icon: PlayCircle,
-    title: 'Video chất lượng cao',
-    description: 'Học từ video Full HD với âm thanh rõ ràng',
-  },
-  {
-    icon: Target,
-    title: 'Lộ trình học tập',
-    description: 'Hệ thống học theo lộ trình từ cơ bản đến nâng cao',
-  },
-  {
-    icon: Zap,
-    title: 'Học mọi lúc mọi nơi',
-    description: 'Truy cập trên mọi thiết bị, học theo tốc độ của bạn',
-  },
-  {
-    icon: Award,
-    title: 'Chứng chỉ uy tín',
-    description: 'Nhận chứng chỉ được công nhận sau khi hoàn thành',
-  },
+const statIcons = [Users, BookOpen, GraduationCap, Award];
+const featureIcons = [PlayCircle, Target, Zap, Award];
+const formatNumber = (value: number) =>
+  new Intl.NumberFormat('vi-VN').format(value);
+const heroCarouselDefaults = [
+  'https://images.unsplash.com/photo-1454165205744-3b78555e5572?auto=format&fit=crop&w=1200&q=80',
+  'https://images.unsplash.com/photo-1498050108023-c5249f4df085?auto=format&fit=crop&w=1200&q=80',
+  'https://images.unsplash.com/photo-1521737604893-d14cc237f11d?auto=format&fit=crop&w=1200&q=80',
 ];
 
 export default function LandingPage() {
-  const [mounted, setMounted] = useState(false);
+  const { settings: publicSettings } = usePublicSettings();
+  const heroBadge = publicSettings.heroBadge || publicSettings.siteName;
+  const heroImages = [
+    publicSettings.heroImageUrl,
+    ...heroCarouselDefaults,
+  ].filter((url): url is string => Boolean(url));
+  const [heroImageIndex, setHeroImageIndex] = useState(0);
 
   useEffect(() => {
-    setMounted(true);
-  }, []);
+    setHeroImageIndex(0);
+  }, [heroImages.length]);
+
+  useEffect(() => {
+    if (heroImages.length <= 1) {
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setHeroImageIndex((prev) => (prev + 1) % heroImages.length);
+    }, 4500);
+
+    return () => clearInterval(interval);
+  }, [heroImages.length]);
+
+  if (publicSettings.maintenance) {
+    return (
+      <div className="flex items-center justify-center min-h-screen px-6 py-16 bg-gray-50">
+        <div className="max-w-xl text-center">
+          <h1 className="text-3xl font-bold text-gray-900 md:text-4xl">
+            {publicSettings.siteName}
+          </h1>
+          <p className="mt-4 text-lg text-gray-600">
+            We are in maintenance mode. Please check back soon.
+          </p>
+          <p className="mt-2 text-sm text-gray-500">
+            {publicSettings.siteDescription}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white">
+      {publicSettings.announcementEnabled && publicSettings.announcementText ? (
+        <div className="px-4 py-3 text-sm font-medium text-center text-white bg-blue-600">
+          {publicSettings.announcementText}
+        </div>
+      ) : null}
       {/* Hero Section */}
       <section className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-purple-50">
         <div className="container px-4 py-20 mx-auto md:py-32">
-          <div className="grid items-center gap-12 lg:grid-cols-2">
+          <div className="grid items-center gap-12 lg:grid-cols-2 lg:items-end">
             {/* Left Content */}
-            <div className={`space-y-8 ${mounted ? 'animate-fade-in-up' : 'opacity-0'}`}>
-              <div className="inline-block px-4 py-2 text-sm font-semibold text-blue-700 bg-blue-100 rounded-full animate-bounce-subtle">
-                🎉 Hơn 50,000 học viên đã tin tưởng
+            <div className="space-y-8">
+              <div className="inline-block px-4 py-2 text-sm font-semibold text-blue-700 bg-blue-100 rounded-full">
+                {heroBadge}
               </div>
               
               <h1 className="text-5xl font-bold leading-tight text-gray-900 md:text-6xl">
-                Học tập không giới hạn,
-                <span className="text-transparent bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text animate-gradient">
-                  {' '}Phát triển mỗi ngày
-                </span>
+                {publicSettings.heroTitle}
+                {publicSettings.heroHighlight ? (
+                  <span className="text-transparent bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text">
+                    {' '}{publicSettings.heroHighlight}
+                  </span>
+                ) : null}
               </h1>
 
               <p className="text-xl leading-relaxed text-gray-600">
-                Nền tảng học trực tuyến hàng đầu với hơn 1,200 khóa học chất lượng cao. 
-                Học từ các chuyên gia hàng đầu, nhận chứng chỉ uy tín.
+                {publicSettings.heroSubtitle}
               </p>
 
               {/* Search Bar */}
-              <div className="relative group">
-                <Search className="absolute w-5 h-5 text-gray-400 transition-colors -translate-y-1/2 left-4 top-1/2 group-focus-within:text-blue-600" />
-                <input
-                  type="text"
-                  placeholder="Tìm kiếm khóa học..."
-                  className="w-full py-4 pl-12 pr-4 text-lg transition-all border-2 border-gray-200 shadow-sm rounded-xl focus:outline-none focus:border-blue-500 focus:shadow-lg"
-                />
-                <button className="absolute px-6 py-2 text-white transition-all -translate-y-1/2 bg-blue-600 rounded-lg right-2 top-1/2 hover:bg-blue-700 hover:shadow-lg hover:scale-105 active:scale-95">
-                  Tìm kiếm
-                </button>
-              </div>
+              <HeroCourseSearch
+                placeholder={publicSettings.searchPlaceholder}
+                buttonLabel={publicSettings.searchButtonLabel}
+              />
 
               {/* CTA Buttons */}
               <div className="flex flex-wrap gap-4">
                 <Link
-                  href="/courses"
-                  className="flex items-center gap-2 px-8 py-4 font-semibold text-white transition-all bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl hover:shadow-xl hover:scale-105 active:scale-95 group"
+                  href={publicSettings.heroPrimaryCtaHref}
+                  className="flex items-center gap-2 px-8 py-4 font-semibold text-white transition-all bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl hover:shadow-xl"
                 >
-                  Khám phá khóa học
-                  <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+                  {publicSettings.heroPrimaryCtaLabel}
+                  <ArrowRight className="w-5 h-5" />
                 </Link>
                 <Link
-                  href="/about"
-                  className="px-8 py-4 font-semibold text-gray-700 transition-all border-2 border-gray-300 rounded-xl hover:border-blue-600 hover:text-blue-600 hover:shadow-lg hover:scale-105 active:scale-95"
+                  href={publicSettings.heroSecondaryCtaHref}
+                  className="px-8 py-4 font-semibold text-gray-700 transition-all border-2 border-gray-300 rounded-xl hover:border-blue-600 hover:text-blue-600"
                 >
-                  Tìm hiểu thêm
+                  {publicSettings.heroSecondaryCtaLabel}
                 </Link>
               </div>
 
@@ -181,13 +197,22 @@ export default function LandingPage() {
             </div>
 
             {/* Right Image */}
-            <div className={`relative hidden lg:block ${mounted ? 'animate-fade-in-right' : 'opacity-0'}`}>
-              <div className="relative z-10 transition-transform duration-500 hover:scale-105">
-                <img
-                  src="https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=800"
-                  alt="Students learning"
-                  className="shadow-2xl rounded-2xl"
-                />
+            <div className="relative hidden w-full lg:block lg:justify-self-end">
+              <div className="relative z-10 h-[483px] w-[597px] overflow-hidden rounded-2xl shadow-2xl">
+                <div
+                  className="flex w-full h-full transition-transform duration-700 ease-out"
+                  style={{ transform: `translateX(-${heroImageIndex * 100}%)` }}
+                >
+                  {heroImages.map((imageUrl, index) => (
+                    <img
+                      key={`${imageUrl}-${index}`}
+                      src={imageUrl}
+                      alt={`${publicSettings.siteName} preview ${index + 1}`}
+                      className="flex-shrink-0 object-cover w-full h-full"
+                      loading={index === 0 ? 'eager' : 'lazy'}
+                    />
+                  ))}
+                </div>
               </div>
               {/* Decorative elements */}
               <div className="absolute bg-purple-300 rounded-full -top-4 -right-4 w-72 h-72 blur-3xl opacity-20 animate-pulse-slow"></div>
@@ -198,40 +223,39 @@ export default function LandingPage() {
       </section>
 
       {/* Stats Section */}
-      <section className="py-12 bg-white border-y">
-        <div className="container px-4 mx-auto">
-          <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
-            {stats.map((stat, index) => {
-              const Icon = stat.icon;
-              return (
-                <div 
-                  key={index} 
-                  className="text-center group animate-fade-in-up"
-                  style={{ animationDelay: `${index * 0.1}s` }}
-                >
-                  <div className="inline-flex items-center justify-center w-16 h-16 mb-4 transition-all bg-blue-100 rounded-full group-hover:bg-blue-600 group-hover:scale-110 group-hover:rotate-6">
-                    <Icon className="w-8 h-8 text-blue-600 transition-colors group-hover:text-white" />
+      {publicSettings.showStats ? (
+        <section className="py-12 bg-white border-y">
+          <div className="container px-4 mx-auto">
+            <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
+              {publicSettings.stats.map((stat, index) => {
+                const Icon = statIcons[index] ?? Users;
+                return (
+                  <div key={index} className="text-center">
+                    <div className="inline-flex items-center justify-center w-16 h-16 mb-4 bg-blue-100 rounded-full">
+                      <Icon className="w-8 h-8 text-blue-600" />
+                    </div>
+                    <div className="mb-1 text-3xl font-bold text-gray-900">
+                      {stat.value}
+                    </div>
+                    <div className="text-gray-600">{stat.label}</div>
                   </div>
-                  <div className="mb-1 text-3xl font-bold text-gray-900 transition-transform group-hover:scale-110">
-                    {stat.value}
-                  </div>
-                  <div className="text-gray-600">{stat.label}</div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
+      ) : null}
 
       {/* Categories Section */}
-      <section className="py-20 bg-gray-50">
+      {publicSettings.showCategories ? (
+        <section className="py-20 bg-gray-50">
         <div className="container px-4 mx-auto">
           <div className="mb-12 text-center animate-fade-in-up">
             <h2 className="mb-4 text-4xl font-bold text-gray-900">
-              Khám phá theo danh mục
+              {publicSettings.categoriesTitle}
             </h2>
             <p className="text-xl text-gray-600">
-              Hơn 1,200 khóa học đa dạng trong nhiều lĩnh vực
+              {publicSettings.categoriesSubtitle}
             </p>
           </div>
 
@@ -239,9 +263,8 @@ export default function LandingPage() {
             {categories.map((category, index) => (
               <Link
                 key={index}
-                href={`/courses?category=${category.name}`}
-                className="p-6 text-center transition-all bg-white border-2 border-gray-200 rounded-xl hover:border-blue-500 hover:shadow-lg group animate-fade-in-up hover:-translate-y-2"
-                style={{ animationDelay: `${index * 0.1}s` }}
+                href={`/courses?category=${encodeURIComponent(category.name)}`}
+                className="p-6 text-center transition-all bg-white border-2 border-gray-200 rounded-xl hover:border-blue-500 hover:shadow-lg group"
               >
                 <div className="mb-3 text-4xl transition-transform group-hover:scale-125 group-hover:rotate-12">
                   {category.icon}
@@ -256,26 +279,28 @@ export default function LandingPage() {
             ))}
           </div>
         </div>
-      </section>
+        </section>
+      ) : null}
 
       {/* Featured Courses */}
-      <section className="py-20 bg-white">
+      {publicSettings.showFeaturedCourses ? (
+        <section className="py-20 bg-white">
         <div className="container px-4 mx-auto">
           <div className="flex items-center justify-between mb-12 animate-fade-in-up">
             <div>
-              <h2 className="mb-4 text-4xl font-bold text-gray-900">
-                Khóa học nổi bật
+                                        <h2 className="mb-4 text-4xl font-bold text-gray-900">
+                {publicSettings.featuredTitle}
               </h2>
-              <p className="text-xl text-gray-600">
-                Được học viên yêu thích nhất
+                                        <p className="text-xl text-gray-600">
+                {publicSettings.featuredSubtitle}
               </p>
             </div>
             <Link
-              href="/courses"
-              className="flex items-center gap-2 px-6 py-3 font-semibold text-blue-600 hover:text-blue-700 group"
+              href={publicSettings.featuredCtaHref}
+              className="flex items-center gap-2 px-6 py-3 font-semibold text-blue-600 hover:text-blue-700"
             >
-              Xem tất cả
-              <ArrowRight className="w-5 h-5 transition-transform group-hover:translate-x-1" />
+              {publicSettings.featuredCtaLabel}
+              <ArrowRight className="w-5 h-5" />
             </Link>
           </div>
 
@@ -322,7 +347,7 @@ export default function LandingPage() {
                       </div>
                       <div className="flex items-center gap-1 text-gray-500">
                         <Users className="w-4 h-4" />
-                        <span>{course.students.toLocaleString()}</span>
+                        <span>{formatNumber(course.students)}</span>
                       </div>
                       <div className="flex items-center gap-1 text-gray-500">
                         <Clock className="w-4 h-4" />
@@ -332,7 +357,7 @@ export default function LandingPage() {
 
                     <div className="flex items-center justify-between pt-3 border-t">
                       <div className="text-2xl font-bold text-gray-900">
-                        ₫{course.price.toLocaleString()}
+                        ₫{formatNumber(course.price)}
                       </div>
                     </div>
                   </div>
@@ -341,23 +366,25 @@ export default function LandingPage() {
             ))}
           </div>
         </div>
-      </section>
+        </section>
+      ) : null}
 
       {/* Features Section */}
-      <section className="py-20 text-white bg-gradient-to-br from-blue-600 to-purple-600">
+      {publicSettings.showFeatures ? (
+        <section className="py-20 text-white bg-gradient-to-br from-blue-600 to-purple-600">
         <div className="container px-4 mx-auto">
-          <div className="mb-16 text-center animate-fade-in-up">
-            <h2 className="mb-4 text-4xl font-bold">
-              Tại sao chọn LearnHub?
+          <div className="mb-16 text-center">
+                        <h2 className="mb-4 text-4xl font-bold">
+              {publicSettings.featuresTitle}
             </h2>
-            <p className="text-xl text-blue-100">
-              Trải nghiệm học tập tốt nhất với các tính năng hiện đại
+                        <p className="text-xl text-blue-100">
+              {publicSettings.featuresSubtitle}
             </p>
           </div>
 
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
-            {features.map((feature, index) => {
-              const Icon = feature.icon;
+            {publicSettings.features.map((feature, index) => {
+              const Icon = featureIcons[index] ?? Award;
               return (
                 <div
                   key={index}
@@ -372,105 +399,36 @@ export default function LandingPage() {
             })}
           </div>
         </div>
-      </section>
+        </section>
+      ) : null}
 
       {/* CTA Section */}
-      <section className="py-20 bg-white">
+      {publicSettings.showCta ? (
+        <section className="py-20 bg-white">
         <div className="container px-4 mx-auto">
-          <div className="max-w-4xl mx-auto text-center animate-fade-in-up">
-            <h2 className="mb-6 text-4xl font-bold text-gray-900 md:text-5xl">
-              Sẵn sàng bắt đầu hành trình học tập?
+          <div className="max-w-4xl mx-auto text-center">
+                        <h2 className="mb-6 text-4xl font-bold text-gray-900 md:text-5xl">
+              {publicSettings.ctaTitle}
             </h2>
-            <p className="mb-8 text-xl text-gray-600">
-              Tham gia cùng hơn 50,000 học viên đang học tập và phát triển mỗi ngày
+                        <p className="mb-8 text-xl text-gray-600">
+              {publicSettings.ctaSubtitle}
             </p>
             <Link
-              href="/register"
-              className="inline-flex items-center gap-2 px-8 py-4 text-lg font-semibold text-white transition-all bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl hover:shadow-xl hover:scale-105 active:scale-95 group"
+              href={publicSettings.ctaButtonHref}
+              className="inline-flex items-center gap-2 px-8 py-4 text-lg font-semibold text-white transition-all bg-gradient-to-r from-blue-600 to-purple-600 rounded-xl hover:shadow-xl"
             >
-              Đăng ký miễn phí ngay
-              <ArrowRight className="w-6 h-6 transition-transform group-hover:translate-x-1" />
+              {publicSettings.ctaButtonLabel}
+              <ArrowRight className="w-6 h-6" />
             </Link>
           </div>
         </div>
-      </section>
-
-      <style jsx>{`
-        @keyframes fade-in-up {
-          from {
-            opacity: 0;
-            transform: translateY(30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
-        }
-
-        @keyframes fade-in-right {
-          from {
-            opacity: 0;
-            transform: translateX(30px);
-          }
-          to {
-            opacity: 1;
-            transform: translateX(0);
-          }
-        }
-
-        @keyframes bounce-subtle {
-          0%, 100% {
-            transform: translateY(0);
-          }
-          50% {
-            transform: translateY(-5px);
-          }
-        }
-
-        @keyframes pulse-slow {
-          0%, 100% {
-            opacity: 0.2;
-          }
-          50% {
-            opacity: 0.3;
-          }
-        }
-
-        @keyframes gradient {
-          0%, 100% {
-            background-position: 0% 50%;
-          }
-          50% {
-            background-position: 100% 50%;
-          }
-        }
-
-        .animate-fade-in-up {
-          animation: fade-in-up 0.6s ease-out forwards;
-        }
-
-        .animate-fade-in-right {
-          animation: fade-in-right 0.8s ease-out forwards;
-        }
-
-        .animate-bounce-subtle {
-          animation: bounce-subtle 2s ease-in-out infinite;
-        }
-
-        .animate-pulse-slow {
-          animation: pulse-slow 4s ease-in-out infinite;
-        }
-
-        .animate-gradient {
-          background-size: 200% 200%;
-          animation: gradient 3s ease infinite;
-        }
-
-        .animate-fade-in {
-          animation: fade-in-up 0.6s ease-out forwards;
-          opacity: 0;
-        }
-      `}</style>
+        </section>
+      ) : null}
     </div>
   );
 }
+
+
+
+
+

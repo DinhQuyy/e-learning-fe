@@ -1,3 +1,4 @@
+import { error } from 'console';
 import { InputHTMLAttributes } from 'react';
 
 interface FormInputProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -7,10 +8,10 @@ interface FormInputProps extends InputHTMLAttributes<HTMLInputElement> {
   placeholder?: string;
   value?: string;
   onChange?: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  error?: string; // ✅ Thêm error prop
   list?: string;
   autoComplete?: string;
-}
+  error?: string;  
+};
 
 export default function FormInput({
   label,
@@ -19,10 +20,9 @@ export default function FormInput({
   placeholder,
   value,
   onChange,
-  error, // ✅ Destructure error
   list,
   autoComplete,
-  ...rest // ✅ Spread remaining props
+  error,  
 }: FormInputProps) {
   return (
     <div className="mb-4">
@@ -41,10 +41,7 @@ export default function FormInput({
         onChange={onChange}
         list={list}
         autoComplete={autoComplete}
-        className={`w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 ${
-          error ? 'border-red-500' : 'border-gray-300'
-        }`}
-        {...rest} // ✅ Apply other HTML attributes
+        className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
       />
       {error && (
         <p className="mt-1 text-sm text-red-500">{error}</p>

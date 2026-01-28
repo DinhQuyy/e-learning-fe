@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { 
   Save, 
   User, 
@@ -9,33 +9,121 @@ import {
   Palette,
   Globe,
   Mail,
-  Lock
+  Lock,
+  Home
 } from 'lucide-react';
+import {
+  defaultPublicSettings,
+  fetchPublicSettings,
+  loadPublicSettings,
+  savePublicSettings,
+  PublicSettings,
+} from '@/lib/public-settings.client';
+
+type AdminSettings = {
+  adminEmail: string;
+  language: string;
+  timezone: string;
+  emailNotifications: boolean;
+  pushNotifications: boolean;
+  weeklyReport: boolean;
+};
+
+const ADMIN_SETTINGS_KEY = 'elearning.admin-settings';
+
+const DEFAULT_ADMIN_SETTINGS: AdminSettings = {
+  adminEmail: 'admin@elearning.com',
+  language: 'vi',
+  timezone: 'Asia/Ho_Chi_Minh',
+  emailNotifications: true,
+  pushNotifications: false,
+  weeklyReport: true,
+};
+
+const loadAdminSettings = () => {
+  if (typeof window === 'undefined') {
+    return DEFAULT_ADMIN_SETTINGS;
+  }
+
+  try {
+    const raw = window.localStorage.getItem(ADMIN_SETTINGS_KEY);
+    if (!raw) {
+      return DEFAULT_ADMIN_SETTINGS;
+    }
+    const parsed = JSON.parse(raw);
+    return { ...DEFAULT_ADMIN_SETTINGS, ...(parsed ?? {}) };
+  } catch {
+    return DEFAULT_ADMIN_SETTINGS;
+  }
+};
+
+const saveAdminSettings = (settings: AdminSettings) => {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  try {
+    window.localStorage.setItem(ADMIN_SETTINGS_KEY, JSON.stringify(settings));
+  } catch {
+    return;
+  }
+};
 
 export default function SettingsPage() {
   const [activeTab, setActiveTab] = useState('general');
-  const [settings, setSettings] = useState({
-    siteName: 'E-Learning Platform',
-    siteDescription: 'Nền tảng học trực tuyến hiện đại',
-    adminEmail: 'admin@elearning.com',
-    language: 'vi',
-    timezone: 'Asia/Ho_Chi_Minh',
-    emailNotifications: true,
-    pushNotifications: false,
-    weeklyReport: true,
-    maintenance: false,
-  });
+  const [publicSettings, setPublicSettings] =
+    useState<PublicSettings>(defaultPublicSettings);
+  const [publicSettingsLoaded, setPublicSettingsLoaded] = useState(false);
+  const [settings, setSettings] =
+    useState<AdminSettings>(DEFAULT_ADMIN_SETTINGS);
+
+  useEffect(() => {
+    setPublicSettings(loadPublicSettings());
+    setPublicSettingsLoaded(true);
+
+    let isActive = true;
+    fetchPublicSettings()
+      .then((next) => {
+        if (isActive) {
+          setPublicSettings(next);
+        }
+      })
+      .catch(() => null);
+
+    return () => {
+      isActive = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    setSettings(loadAdminSettings());
+  }, []);
+
+  useEffect(() => {
+    if (!publicSettingsLoaded) {
+      return;
+    }
+
+    const handler = setTimeout(() => {
+      void savePublicSettings(publicSettings);
+    }, 400);
+
+    return () => clearTimeout(handler);
+  }, [publicSettings, publicSettingsLoaded]);
 
   const tabs = [
     { id: 'general', label: 'Chung', icon: Globe },
+    { id: 'landing', label: 'Landing', icon: Home },
     { id: 'profile', label: 'Hồ sơ', icon: User },
     { id: 'notifications', label: 'Thông báo', icon: Bell },
     { id: 'security', label: 'Bảo mật', icon: Shield },
     { id: 'appearance', label: 'Giao diện', icon: Palette },
   ];
 
-  const handleSave = () => {
-    alert('Lưu cài đặt thành công!');
+  const handleSave = async () => {
+    saveAdminSettings(settings);
+    await savePublicSettings(publicSettings);
+    alert('Da luu cai dat thanh cong!');
   };
 
   return (
@@ -96,9 +184,12 @@ export default function SettingsPage() {
                     </label>
                     <input
                       type="text"
-                      value={settings.siteName}
+                      value={publicSettings.siteName}
                       onChange={(e) =>
-                        setSettings({ ...settings, siteName: e.target.value })
+                        setPublicSettings({
+                          ...publicSettings,
+                          siteName: e.target.value,
+                        })
                       }
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
@@ -109,15 +200,50 @@ export default function SettingsPage() {
                       Mô tả
                     </label>
                     <textarea
-                      value={settings.siteDescription}
+                      value={publicSettings.siteDescription}
                       onChange={(e) =>
-                        setSettings({
-                          ...settings,
+                        setPublicSettings({
+                          ...publicSettings,
                           siteDescription: e.target.value,
                         })
                       }
                       rows={3}
                       className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+
+                  <div className="p-4 border border-gray-200 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-gray-900">
+                        Announcement Bar
+                      </span>
+                      <input
+                        type="checkbox"
+                        checked={publicSettings.announcementEnabled}
+                        onChange={(e) =>
+                          setPublicSettings({
+                            ...publicSettings,
+                            announcementEnabled: e.target.checked,
+                          })
+                        }
+                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
+                      />
+                    </div>
+                    <textarea
+                      value={publicSettings.announcementText}
+                      onChange={(e) =>
+                        setPublicSettings({
+                          ...publicSettings,
+                          announcementText: e.target.value,
+                        })
+                      }
+                      rows={2}
+                      disabled={!publicSettings.announcementEnabled}
+                      className={`mt-3 w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 ${
+                        publicSettings.announcementEnabled
+                          ? ''
+                          : 'bg-gray-100 text-gray-400'
+                      }`}
                     />
                   </div>
 
@@ -177,10 +303,10 @@ export default function SettingsPage() {
                     <label className="flex items-center gap-3">
                       <input
                         type="checkbox"
-                        checked={settings.maintenance}
+                        checked={publicSettings.maintenance}
                         onChange={(e) =>
-                          setSettings({
-                            ...settings,
+                          setPublicSettings({
+                            ...publicSettings,
                             maintenance: e.target.checked,
                           })
                         }
@@ -195,6 +321,611 @@ export default function SettingsPage() {
                         </p>
                       </div>
                     </label>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Landing Page Settings */}
+            {activeTab === 'landing' && (
+              <div className="space-y-8">
+                <div>
+                  <h2 className="mb-4 text-xl font-bold text-gray-900">
+                    Landing Page
+                  </h2>
+                  <p className="text-sm text-gray-600">
+                    Manage content shown on the student homepage.
+                  </p>
+                </div>
+
+                <div className="space-y-6">
+                  <div className="space-y-4 rounded-lg border border-gray-200 p-4">
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">Hero</h3>
+                      <p className="text-sm text-gray-600">
+                        Main headline, banner, and search.
+                      </p>
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div>
+                        <label className="block mb-2 text-sm font-medium text-gray-700">
+                          Badge text
+                        </label>
+                        <input
+                          type="text"
+                          value={publicSettings.heroBadge}
+                          onChange={(e) =>
+                            setPublicSettings({
+                              ...publicSettings,
+                              heroBadge: e.target.value,
+                            })
+                          }
+                          className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block mb-2 text-sm font-medium text-gray-700">
+                          Hero title
+                        </label>
+                        <input
+                          type="text"
+                          value={publicSettings.heroTitle}
+                          onChange={(e) =>
+                            setPublicSettings({
+                              ...publicSettings,
+                              heroTitle: e.target.value,
+                            })
+                          }
+                          className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block mb-2 text-sm font-medium text-gray-700">
+                          Highlight text
+                        </label>
+                        <input
+                          type="text"
+                          value={publicSettings.heroHighlight}
+                          onChange={(e) =>
+                            setPublicSettings({
+                              ...publicSettings,
+                              heroHighlight: e.target.value,
+                            })
+                          }
+                          className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block mb-2 text-sm font-medium text-gray-700">
+                          Hero image URL
+                        </label>
+                        <input
+                          type="text"
+                          value={publicSettings.heroImageUrl}
+                          onChange={(e) =>
+                            setPublicSettings({
+                              ...publicSettings,
+                              heroImageUrl: e.target.value,
+                            })
+                          }
+                          className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block mb-2 text-sm font-medium text-gray-700">
+                        Hero subtitle
+                      </label>
+                      <textarea
+                        value={publicSettings.heroSubtitle}
+                        onChange={(e) =>
+                          setPublicSettings({
+                            ...publicSettings,
+                            heroSubtitle: e.target.value,
+                          })
+                        }
+                        rows={3}
+                        className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div>
+                        <label className="block mb-2 text-sm font-medium text-gray-700">
+                          Search placeholder
+                        </label>
+                        <input
+                          type="text"
+                          value={publicSettings.searchPlaceholder}
+                          onChange={(e) =>
+                            setPublicSettings({
+                              ...publicSettings,
+                              searchPlaceholder: e.target.value,
+                            })
+                          }
+                          className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block mb-2 text-sm font-medium text-gray-700">
+                          Search button
+                        </label>
+                        <input
+                          type="text"
+                          value={publicSettings.searchButtonLabel}
+                          onChange={(e) =>
+                            setPublicSettings({
+                              ...publicSettings,
+                              searchButtonLabel: e.target.value,
+                            })
+                          }
+                          className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div>
+                        <label className="block mb-2 text-sm font-medium text-gray-700">
+                          Primary CTA label
+                        </label>
+                        <input
+                          type="text"
+                          value={publicSettings.heroPrimaryCtaLabel}
+                          onChange={(e) =>
+                            setPublicSettings({
+                              ...publicSettings,
+                              heroPrimaryCtaLabel: e.target.value,
+                            })
+                          }
+                          className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block mb-2 text-sm font-medium text-gray-700">
+                          Primary CTA link
+                        </label>
+                        <input
+                          type="text"
+                          value={publicSettings.heroPrimaryCtaHref}
+                          onChange={(e) =>
+                            setPublicSettings({
+                              ...publicSettings,
+                              heroPrimaryCtaHref: e.target.value,
+                            })
+                          }
+                          className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block mb-2 text-sm font-medium text-gray-700">
+                          Secondary CTA label
+                        </label>
+                        <input
+                          type="text"
+                          value={publicSettings.heroSecondaryCtaLabel}
+                          onChange={(e) =>
+                            setPublicSettings({
+                              ...publicSettings,
+                              heroSecondaryCtaLabel: e.target.value,
+                            })
+                          }
+                          className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block mb-2 text-sm font-medium text-gray-700">
+                          Secondary CTA link
+                        </label>
+                        <input
+                          type="text"
+                          value={publicSettings.heroSecondaryCtaHref}
+                          onChange={(e) =>
+                            setPublicSettings({
+                              ...publicSettings,
+                              heroSecondaryCtaHref: e.target.value,
+                            })
+                          }
+                          className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3 rounded-lg border border-gray-200 p-4">
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      Section visibility
+                    </h3>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input
+                          type="checkbox"
+                          checked={publicSettings.showStats}
+                          onChange={(e) =>
+                            setPublicSettings({
+                              ...publicSettings,
+                              showStats: e.target.checked,
+                            })
+                          }
+                          className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        Show stats
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input
+                          type="checkbox"
+                          checked={publicSettings.showCategories}
+                          onChange={(e) =>
+                            setPublicSettings({
+                              ...publicSettings,
+                              showCategories: e.target.checked,
+                            })
+                          }
+                          className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        Show categories
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input
+                          type="checkbox"
+                          checked={publicSettings.showFeaturedCourses}
+                          onChange={(e) =>
+                            setPublicSettings({
+                              ...publicSettings,
+                              showFeaturedCourses: e.target.checked,
+                            })
+                          }
+                          className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        Show featured courses
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input
+                          type="checkbox"
+                          checked={publicSettings.showFeatures}
+                          onChange={(e) =>
+                            setPublicSettings({
+                              ...publicSettings,
+                              showFeatures: e.target.checked,
+                            })
+                          }
+                          className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        Show features
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-700">
+                        <input
+                          type="checkbox"
+                          checked={publicSettings.showCta}
+                          onChange={(e) =>
+                            setPublicSettings({
+                              ...publicSettings,
+                              showCta: e.target.checked,
+                            })
+                          }
+                          className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                        Show final CTA
+                      </label>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4 rounded-lg border border-gray-200 p-4">
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      Categories section
+                    </h3>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div>
+                        <label className="block mb-2 text-sm font-medium text-gray-700">
+                          Title
+                        </label>
+                        <input
+                          type="text"
+                          value={publicSettings.categoriesTitle}
+                          onChange={(e) =>
+                            setPublicSettings({
+                              ...publicSettings,
+                              categoriesTitle: e.target.value,
+                            })
+                          }
+                          className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block mb-2 text-sm font-medium text-gray-700">
+                          Subtitle
+                        </label>
+                        <input
+                          type="text"
+                          value={publicSettings.categoriesSubtitle}
+                          onChange={(e) =>
+                            setPublicSettings({
+                              ...publicSettings,
+                              categoriesSubtitle: e.target.value,
+                            })
+                          }
+                          className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4 rounded-lg border border-gray-200 p-4">
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      Featured courses section
+                    </h3>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div>
+                        <label className="block mb-2 text-sm font-medium text-gray-700">
+                          Title
+                        </label>
+                        <input
+                          type="text"
+                          value={publicSettings.featuredTitle}
+                          onChange={(e) =>
+                            setPublicSettings({
+                              ...publicSettings,
+                              featuredTitle: e.target.value,
+                            })
+                          }
+                          className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block mb-2 text-sm font-medium text-gray-700">
+                          Subtitle
+                        </label>
+                        <input
+                          type="text"
+                          value={publicSettings.featuredSubtitle}
+                          onChange={(e) =>
+                            setPublicSettings({
+                              ...publicSettings,
+                              featuredSubtitle: e.target.value,
+                            })
+                          }
+                          className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block mb-2 text-sm font-medium text-gray-700">
+                          Link label
+                        </label>
+                        <input
+                          type="text"
+                          value={publicSettings.featuredCtaLabel}
+                          onChange={(e) =>
+                            setPublicSettings({
+                              ...publicSettings,
+                              featuredCtaLabel: e.target.value,
+                            })
+                          }
+                          className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block mb-2 text-sm font-medium text-gray-700">
+                          Link URL
+                        </label>
+                        <input
+                          type="text"
+                          value={publicSettings.featuredCtaHref}
+                          onChange={(e) =>
+                            setPublicSettings({
+                              ...publicSettings,
+                              featuredCtaHref: e.target.value,
+                            })
+                          }
+                          className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4 rounded-lg border border-gray-200 p-4">
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      Features section
+                    </h3>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div>
+                        <label className="block mb-2 text-sm font-medium text-gray-700">
+                          Title
+                        </label>
+                        <input
+                          type="text"
+                          value={publicSettings.featuresTitle}
+                          onChange={(e) =>
+                            setPublicSettings({
+                              ...publicSettings,
+                              featuresTitle: e.target.value,
+                            })
+                          }
+                          className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block mb-2 text-sm font-medium text-gray-700">
+                          Subtitle
+                        </label>
+                        <input
+                          type="text"
+                          value={publicSettings.featuresSubtitle}
+                          onChange={(e) =>
+                            setPublicSettings({
+                              ...publicSettings,
+                              featuresSubtitle: e.target.value,
+                            })
+                          }
+                          className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4 rounded-lg border border-gray-200 p-4">
+                    <h3 className="text-lg font-semibold text-gray-900">Stats</h3>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      {publicSettings.stats.map((stat, index) => (
+                        <div key={`stat-${index}`} className="space-y-2">
+                          <label className="block text-sm font-medium text-gray-700">
+                            Stat {index + 1}
+                          </label>
+                          <input
+                            type="text"
+                            value={stat.label}
+                            onChange={(e) => {
+                              const nextStats = [...publicSettings.stats];
+                              nextStats[index] = {
+                                ...nextStats[index],
+                                label: e.target.value,
+                              };
+                              setPublicSettings({
+                                ...publicSettings,
+                                stats: nextStats,
+                              });
+                            }}
+                            className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                          <input
+                            type="text"
+                            value={stat.value}
+                            onChange={(e) => {
+                              const nextStats = [...publicSettings.stats];
+                              nextStats[index] = {
+                                ...nextStats[index],
+                                value: e.target.value,
+                              };
+                              setPublicSettings({
+                                ...publicSettings,
+                                stats: nextStats,
+                              });
+                            }}
+                            className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-4 rounded-lg border border-gray-200 p-4">
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      Feature list
+                    </h3>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      {publicSettings.features.map((feature, index) => (
+                        <div key={`feature-${index}`} className="space-y-2">
+                          <label className="block text-sm font-medium text-gray-700">
+                            Feature {index + 1}
+                          </label>
+                          <input
+                            type="text"
+                            value={feature.title}
+                            onChange={(e) => {
+                              const nextFeatures = [...publicSettings.features];
+                              nextFeatures[index] = {
+                                ...nextFeatures[index],
+                                title: e.target.value,
+                              };
+                              setPublicSettings({
+                                ...publicSettings,
+                                features: nextFeatures,
+                              });
+                            }}
+                            className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                          <textarea
+                            value={feature.description}
+                            onChange={(e) => {
+                              const nextFeatures = [...publicSettings.features];
+                              nextFeatures[index] = {
+                                ...nextFeatures[index],
+                                description: e.target.value,
+                              };
+                              setPublicSettings({
+                                ...publicSettings,
+                                features: nextFeatures,
+                              });
+                            }}
+                            rows={3}
+                            className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-4 rounded-lg border border-gray-200 p-4">
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      Final CTA section
+                    </h3>
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div>
+                        <label className="block mb-2 text-sm font-medium text-gray-700">
+                          Title
+                        </label>
+                        <input
+                          type="text"
+                          value={publicSettings.ctaTitle}
+                          onChange={(e) =>
+                            setPublicSettings({
+                              ...publicSettings,
+                              ctaTitle: e.target.value,
+                            })
+                          }
+                          className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block mb-2 text-sm font-medium text-gray-700">
+                          Subtitle
+                        </label>
+                        <input
+                          type="text"
+                          value={publicSettings.ctaSubtitle}
+                          onChange={(e) =>
+                            setPublicSettings({
+                              ...publicSettings,
+                              ctaSubtitle: e.target.value,
+                            })
+                          }
+                          className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block mb-2 text-sm font-medium text-gray-700">
+                          Button label
+                        </label>
+                        <input
+                          type="text"
+                          value={publicSettings.ctaButtonLabel}
+                          onChange={(e) =>
+                            setPublicSettings({
+                              ...publicSettings,
+                              ctaButtonLabel: e.target.value,
+                            })
+                          }
+                          className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block mb-2 text-sm font-medium text-gray-700">
+                          Button URL
+                        </label>
+                        <input
+                          type="text"
+                          value={publicSettings.ctaButtonHref}
+                          onChange={(e) =>
+                            setPublicSettings({
+                              ...publicSettings,
+                              ctaButtonHref: e.target.value,
+                            })
+                          }
+                          className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -497,3 +1228,6 @@ export default function SettingsPage() {
     </div>
   );
 }
+
+
+
