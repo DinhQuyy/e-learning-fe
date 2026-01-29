@@ -103,7 +103,7 @@ export default function LoginPage() {
     setForgotSuccess(null);
 
     if (!forgotEmail) {
-      setForgotError("Vui long nhap email.");
+      setForgotError("Vui lòng nhập email.");
       return;
     }
 
@@ -118,16 +118,16 @@ export default function LoginPage() {
       const data = await res.json().catch(() => null);
 
       if (!res.ok) {
-        setForgotError(data?.message || "Khong the gui yeu cau quen mat khau.");
+        setForgotError(data?.message || "Không thể gửi yêu cầu quên mật khẩu.");
         return;
       }
 
       setForgotSuccess(
-        "Neu email ton tai, chung toi da gui huong dan dat lai mat khau."
+        "Nếu email tồn tại, chúng tôi đã gửi hướng dẫn đặt lại mật khẩu."
       );
     } catch (err) {
       console.error(err);
-      setForgotError("Khong the ket noi toi server.");
+      setForgotError("Không thể kết nối tới server.");
     } finally {
       setForgotLoading(false);
     }
@@ -159,7 +159,7 @@ export default function LoginPage() {
             type="password"
             placeholder="••••••••"
             value={password}
-            onChange={(e: any) => setPassword(e.target.value)}
+            onChange={(e) => setPassword(e.target.value)}
           />
           <div className="flex items-center justify-between mt-2 text-sm text-gray-400">
             <label className="flex items-center gap-2">
@@ -176,19 +176,19 @@ export default function LoginPage() {
               onClick={openForgotPassword}
               className="text-blue-400 hover:underline"
             >
-              Quen mat khau?
+              Quên mật khẩu?
             </button>
           </div>
 
           {error && (
-            <p className="text-sm text-red-500 mt-2 text-center">{error}</p>
+            <p className="mt-2 text-sm text-center text-red-500">{error}</p>
           )}
 
           <Button disabled={loading}>
             {loading ? "Đang đăng nhập..." : "Đăng nhập"}
           </Button>
 
-          <p className="text-sm text-center text-gray-400 mt-4">
+          <p className="mt-4 text-sm text-center text-gray-400">
             Chưa có tài khoản?{" "}
             <Link href="/register" className="text-blue-400 hover:underline">
               Đăng ký ngay
@@ -211,17 +211,17 @@ export default function LoginPage() {
       <button
         type="button"
         onClick={closeForgotPassword}
-        className="absolute right-4 top-4 z-10 rounded-full bg-white px-3 py-1 text-sm text-gray-600 shadow hover:text-gray-900"
+        className="absolute z-10 px-3 py-1 text-sm text-gray-600 bg-white rounded-full shadow right-4 top-4 hover:text-gray-900"
       >
         X
       </button>
-      <AuthCard title="Quen mat khau">
+      <AuthCard title="Quên mật khẩu">
         <form onSubmit={handleForgotPassword}>
           <FormInput
             label="Email"
             name="forgot_email"
             type="email"
-            placeholder="Nhap email cua ban"
+            placeholder="Nhập email của bạn"
             value={forgotEmail}
             onChange={(event) => setForgotEmail(event.target.value)}
           />
@@ -240,18 +240,18 @@ export default function LoginPage() {
           <button
             type="submit"
             disabled={forgotLoading}
-            className="mt-4 w-full rounded-lg bg-blue-600 py-2 text-white transition hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70"
+            className="w-full py-2 mt-4 text-white transition bg-blue-600 rounded-lg hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-70"
           >
-            {forgotLoading ? "Dang gui..." : "Gui yeu cau"}
+            {forgotLoading ? "Đang gửi..." : "Gửi yêu cầu"}
           </button>
 
-          <p className="mt-4 text-center text-sm text-gray-400">
+          <p className="mt-4 text-sm text-center text-gray-400">
             <button
               type="button"
               onClick={closeForgotPassword}
               className="text-blue-400 hover:underline"
             >
-              Quay lai dang nhap
+              Quay lại đăng nhập
             </button>
           </p>
         </form>

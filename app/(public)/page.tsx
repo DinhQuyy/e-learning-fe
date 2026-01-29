@@ -117,7 +117,7 @@ export default function LandingPage() {
 
   if (publicSettings.maintenance) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50 px-6 py-16">
+      <div className="flex items-center justify-center min-h-screen px-6 py-16 bg-gray-50">
         <div className="max-w-xl text-center">
           <h1 className="text-3xl font-bold text-gray-900 md:text-4xl">
             {publicSettings.siteName}
@@ -136,7 +136,7 @@ export default function LandingPage() {
   return (
     <div className="min-h-screen bg-white">
       {publicSettings.announcementEnabled && publicSettings.announcementText ? (
-        <div className="bg-blue-600 px-4 py-3 text-center text-sm font-medium text-white">
+        <div className="px-4 py-3 text-sm font-medium text-center text-white bg-blue-600">
           {publicSettings.announcementText}
         </div>
       ) : null}
@@ -188,7 +188,7 @@ export default function LandingPage() {
 
               {/* Trust Badges */}
               <div className="flex items-center gap-6 pt-4">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 animate-fade-in" style={{ animationDelay: '0.3s' }}>
                   <Star className="w-5 h-5 text-yellow-400 fill-yellow-400" />
                   <span className="font-semibold">4.8/5</span>
                   <span className="text-gray-500">(12,547 đánh giá)</span>
@@ -197,10 +197,10 @@ export default function LandingPage() {
             </div>
 
             {/* Right Image */}
-            <div className="relative hidden lg:block w-full lg:justify-self-end">
+            <div className="relative hidden w-full lg:block lg:justify-self-end">
               <div className="relative z-10 h-[483px] w-[597px] overflow-hidden rounded-2xl shadow-2xl">
                 <div
-                  className="flex h-full w-full transition-transform duration-700 ease-out"
+                  className="flex w-full h-full transition-transform duration-700 ease-out"
                   style={{ transform: `translateX(-${heroImageIndex * 100}%)` }}
                 >
                   {heroImages.map((imageUrl, index) => (
@@ -208,15 +208,15 @@ export default function LandingPage() {
                       key={`${imageUrl}-${index}`}
                       src={imageUrl}
                       alt={`${publicSettings.siteName} preview ${index + 1}`}
-                      className="h-full w-full flex-shrink-0 object-cover"
+                      className="flex-shrink-0 object-cover w-full h-full"
                       loading={index === 0 ? 'eager' : 'lazy'}
                     />
                   ))}
                 </div>
               </div>
               {/* Decorative elements */}
-              <div className="absolute bg-purple-300 rounded-full -top-4 -right-4 w-72 h-72 blur-3xl opacity-20"></div>
-              <div className="absolute bg-blue-300 rounded-full -bottom-4 -left-4 w-72 h-72 blur-3xl opacity-20"></div>
+              <div className="absolute bg-purple-300 rounded-full -top-4 -right-4 w-72 h-72 blur-3xl opacity-20 animate-pulse-slow"></div>
+              <div className="absolute bg-blue-300 rounded-full -bottom-4 -left-4 w-72 h-72 blur-3xl opacity-20 animate-pulse-slow" style={{ animationDelay: '1s' }}></div>
             </div>
           </div>
         </div>
@@ -250,7 +250,7 @@ export default function LandingPage() {
       {publicSettings.showCategories ? (
         <section className="py-20 bg-gray-50">
         <div className="container px-4 mx-auto">
-          <div className="mb-12 text-center">
+          <div className="mb-12 text-center animate-fade-in-up">
             <h2 className="mb-4 text-4xl font-bold text-gray-900">
               {publicSettings.categoriesTitle}
             </h2>
@@ -266,10 +266,10 @@ export default function LandingPage() {
                 href={`/courses?category=${encodeURIComponent(category.name)}`}
                 className="p-6 text-center transition-all bg-white border-2 border-gray-200 rounded-xl hover:border-blue-500 hover:shadow-lg group"
               >
-                <div className="mb-3 text-4xl transition-transform group-hover:scale-110">
+                <div className="mb-3 text-4xl transition-transform group-hover:scale-125 group-hover:rotate-12">
                   {category.icon}
                 </div>
-                <div className="mb-1 font-semibold text-gray-900">
+                <div className="mb-1 font-semibold text-gray-900 transition-colors group-hover:text-blue-600">
                   {category.name}
                 </div>
                 <div className="text-sm text-gray-500">
@@ -286,7 +286,7 @@ export default function LandingPage() {
       {publicSettings.showFeaturedCourses ? (
         <section className="py-20 bg-white">
         <div className="container px-4 mx-auto">
-          <div className="flex items-center justify-between mb-12">
+          <div className="flex items-center justify-between mb-12 animate-fade-in-up">
             <div>
                                         <h2 className="mb-4 text-4xl font-bold text-gray-900">
                 {publicSettings.featuredTitle}
@@ -305,20 +305,22 @@ export default function LandingPage() {
           </div>
 
           <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-4">
-            {featuredCourses.map((course) => (
+            {featuredCourses.map((course, index) => (
               <Link
                 key={course.id}
                 href={`/courses/${course.id}`}
-                className="group"
+                className="group animate-fade-in-up"
+                style={{ animationDelay: `${index * 0.1}s` }}
               >
-                <div className="overflow-hidden transition-all bg-white border-2 border-gray-200 rounded-xl hover:border-blue-500 hover:shadow-xl">
+                <div className="overflow-hidden transition-all bg-white border-2 border-gray-200 rounded-xl hover:border-blue-500 hover:shadow-2xl hover:-translate-y-2">
                   {/* Thumbnail */}
                   <div className="relative h-48 overflow-hidden">
                     <img
                       src={course.thumbnail}
                       alt={course.title}
-                      className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-110"
+                      className="object-cover w-full h-full transition-transform duration-500 group-hover:scale-125 group-hover:rotate-2"
                     />
+                    <div className="absolute inset-0 transition-opacity opacity-0 bg-gradient-to-t from-black/50 to-transparent group-hover:opacity-100"></div>
                     <div className="absolute px-3 py-1 text-sm font-semibold rounded-full top-3 right-3 bg-white/90 backdrop-blur-sm">
                       {course.level}
                     </div>
@@ -386,9 +388,10 @@ export default function LandingPage() {
               return (
                 <div
                   key={index}
-                  className="p-6 transition-all border bg-white/10 backdrop-blur-sm rounded-xl border-white/20 hover:bg-white/20"
+                  className="p-6 transition-all border bg-white/10 backdrop-blur-sm rounded-xl border-white/20 hover:bg-white/20 hover:scale-105 hover:-translate-y-2 animate-fade-in-up"
+                  style={{ animationDelay: `${index * 0.1}s` }}
                 >
-                  <Icon className="w-12 h-12 mb-4" />
+                  <Icon className="w-12 h-12 mb-4 transition-transform hover:scale-125 hover:rotate-12" />
                   <h3 className="mb-2 text-xl font-bold">{feature.title}</h3>
                   <p className="text-blue-100">{feature.description}</p>
                 </div>

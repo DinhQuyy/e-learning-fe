@@ -63,13 +63,7 @@ const buildThumbnailUrl = (value: unknown, directusUrl: string) => {
 
 const levels = ['All Levels', 'Beginner', 'Intermediate', 'Advanced'];
 const durations = ['All Durations', 'Under 10 hours', '10-20 hours', '20+ hours'];
-const priceRanges = [
-  'All Prices',
-  'Free',
-  'Under 1M',
-  '1M - 2M',
-  '2M+',
-];
+const priceRanges = ['All Prices', 'Free', 'Under 1M', '1M - 2M', '2M+'];
 
 const mockCategories: Category[] = [
   { id: 'web-development', title: 'Web Development' },
@@ -569,13 +563,13 @@ export default function CoursesPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="relative overflow-hidden py-16 text-white bg-gradient-to-r from-blue-600 to-purple-600">
+      <div className="relative py-16 overflow-hidden text-white bg-gradient-to-r from-blue-600 to-purple-600">
         <div
-          className="absolute -top-24 -right-24 h-72 w-72 rounded-full bg-white/15 blur-3xl"
+          className="absolute rounded-full -top-24 -right-24 h-72 w-72 bg-white/15 blur-3xl"
           aria-hidden="true"
         />
         <div
-          className="absolute -bottom-28 -left-20 h-72 w-72 rounded-full bg-blue-300/20 blur-3xl"
+          className="absolute rounded-full -bottom-28 -left-20 h-72 w-72 bg-blue-300/20 blur-3xl"
           aria-hidden="true"
         />
         <div className="container relative px-4 mx-auto">
@@ -594,14 +588,14 @@ export default function CoursesPage() {
                   className="absolute inset-0 rounded-2xl bg-white/25 blur-xl"
                   aria-hidden="true"
                 />
-                <div className="relative flex items-center gap-3 rounded-2xl border border-white/70 bg-white/95 px-4 py-3 shadow-2xl backdrop-blur transition duration-300 focus-within:ring-4 focus-within:ring-white/80">
-                  <Search className="h-5 w-5 text-blue-600" />
+                <div className="relative flex items-center gap-3 px-4 py-3 transition duration-300 border shadow-2xl rounded-2xl border-white/70 bg-white/95 backdrop-blur focus-within:ring-4 focus-within:ring-white/80">
+                  <Search className="w-5 h-5 text-blue-600" />
                   <input
                     type="text"
                     placeholder="Tìm kiếm khóa học..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="w-full bg-transparent py-2 pr-2 text-gray-900 placeholder:text-gray-400 focus:outline-none"
+                    className="w-full py-2 pr-2 text-gray-900 bg-transparent placeholder:text-gray-400 focus:outline-none"
                   />
                 </div>
               </div>
@@ -614,29 +608,29 @@ export default function CoursesPage() {
       <div className="container px-4 py-8 mx-auto">
         <div className="flex gap-8">
           {/* Sidebar Filters - Desktop */}
-          <aside className="flex-shrink-0 hidden w-64 lg:block">
-            <div className="sticky p-6 space-y-6 bg-white rounded-xl top-8">
+          <aside className="flex-shrink-0 hidden w-64 lg:block animate-fade-in">
+            <div className="sticky p-6 space-y-6 bg-white border border-gray-200 shadow-sm rounded-xl top-8">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold">Filters</h3>
+                <h3 className="text-lg font-bold">Bộ lọc</h3>
                 {hasActiveFilters && (
                   <button
                     onClick={clearFilters}
-                    className="text-sm text-blue-600 hover:text-blue-700"
+                    className="text-sm text-blue-600 transition-colors hover:text-blue-700 hover:underline"
                   >
-                    Clear all
+                    Xóa tất cả
                   </button>
                 )}
               </div>
 
               {/* Category */}
-              <div>
-                <label className="block mb-2 text-sm font-semibold text-gray-700">
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700">
                   Danh mục
                 </label>
                 <select
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 transition-all border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-blue-400"
                 >
                   {categoryOptions.map((cat) => (
                     <option key={cat} value={cat}>
@@ -647,55 +641,49 @@ export default function CoursesPage() {
               </div>
 
               {/* Level */}
-              <div>
-                <label className="block mb-2 text-sm font-semibold text-gray-700">
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700">
                   Trình độ
                 </label>
                 <select
                   value={selectedLevel}
                   onChange={(e) => setSelectedLevel(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 transition-all border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-blue-400"
                 >
                   {levels.map((level) => (
-                    <option key={level} value={level}>
-                      {level}
-                    </option>
+                    <option key={level} value={level}>{level}</option>
                   ))}
                 </select>
               </div>
 
               {/* Duration */}
-              <div>
-                <label className="block mb-2 text-sm font-semibold text-gray-700">
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700">
                   Thời lượng
                 </label>
                 <select
                   value={selectedDuration}
                   onChange={(e) => setSelectedDuration(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 transition-all border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-blue-400"
                 >
                   {durations.map((duration) => (
-                    <option key={duration} value={duration}>
-                      {duration}
-                    </option>
+                    <option key={duration} value={duration}>{duration}</option>
                   ))}
                 </select>
               </div>
 
               {/* Price */}
-              <div>
-                <label className="block mb-2 text-sm font-semibold text-gray-700">
+              <div className="space-y-2">
+                <label className="block text-sm font-semibold text-gray-700">
                   Giá
                 </label>
                 <select
                   value={selectedPrice}
                   onChange={(e) => setSelectedPrice(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 transition-all border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-blue-400"
                 >
                   {priceRanges.map((price) => (
-                    <option key={price} value={price}>
-                      {price}
-                    </option>
+                    <option key={price} value={price}>{price}</option>
                   ))}
                 </select>
               </div>
@@ -705,7 +693,7 @@ export default function CoursesPage() {
           {/* Main Content */}
           <div className="flex-1">
             {/* Toolbar */}
-            <div className="flex flex-wrap items-center justify-between gap-4 p-4 mb-6 bg-white rounded-xl">
+            <div className="flex flex-wrap items-center justify-between gap-4 p-4 mb-6 bg-white border border-gray-200 shadow-sm rounded-xl animate-fade-in">
               <div className="flex items-center gap-4">
                 <span className="font-medium text-gray-700">
                   {loading ? 'Loading...' : `${sortedCourses.length} khóa học`}
@@ -714,10 +702,10 @@ export default function CoursesPage() {
                 {/* Mobile Filter Button */}
                 <button
                   onClick={() => setShowFilters(!showFilters)}
-                  className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg lg:hidden hover:bg-gray-50"
+                  className="flex items-center gap-2 px-4 py-2 transition-all border border-gray-300 rounded-lg lg:hidden hover:bg-gray-50 hover:border-blue-500"
                 >
                   <SlidersHorizontal className="w-4 h-4" />
-                  Filters
+                  Bộ lọc
                 </button>
               </div>
 
@@ -726,7 +714,7 @@ export default function CoursesPage() {
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="px-4 py-2 transition-all border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 hover:border-blue-400"
                 >
                   <option value="popular">Phổ biến nhất</option>
                   <option value="rating">Đánh giá cao nhất</option>
@@ -739,7 +727,7 @@ export default function CoursesPage() {
                 <div className="flex gap-2 p-1 border border-gray-300 rounded-lg">
                   <button
                     onClick={() => setViewMode('grid')}
-                    className={`p-2 rounded ${
+                    className={`p-2 rounded transition-all ${
                       viewMode === 'grid'
                         ? 'bg-blue-100 text-blue-600'
                         : 'text-gray-600 hover:bg-gray-100'
@@ -749,7 +737,7 @@ export default function CoursesPage() {
                   </button>
                   <button
                     onClick={() => setViewMode('list')}
-                    className={`p-2 rounded ${
+                    className={`p-2 rounded transition-all ${
                       viewMode === 'list'
                         ? 'bg-blue-100 text-blue-600'
                         : 'text-gray-600 hover:bg-gray-100'
@@ -761,25 +749,22 @@ export default function CoursesPage() {
               </div>
             </div>
             {error && (
-              <div className="p-4 mb-4 text-sm text-orange-700 bg-orange-50 border border-orange-200 rounded-lg">
+              <div className="p-4 mb-4 text-sm text-orange-700 border border-orange-200 rounded-lg bg-orange-50">
                 {error}
               </div>
             )}
 
             {/* Mobile Filters */}
             {showFilters && (
-              <div className="p-6 mb-6 space-y-4 bg-white lg:hidden rounded-xl">
+              <div className="p-6 mb-6 space-y-4 bg-white border border-gray-200 shadow-sm lg:hidden rounded-xl animate-slide-down">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-bold">Filters</h3>
+                  <h3 className="text-lg font-bold">Bộ lọc</h3>
                   <button onClick={() => setShowFilters(false)}>
                     <X className="w-5 h-5" />
                   </button>
                 </div>
                 {/* Same filters as sidebar */}
-                <div>
-                  <label className="block mb-2 text-sm font-semibold text-gray-700">
-                    Danh mục
-                  </label>
+                <div className="space-y-4">
                   <select
                     value={selectedCategory}
                     onChange={(e) => setSelectedCategory(e.target.value)}
@@ -792,7 +777,6 @@ export default function CoursesPage() {
                     ))}
                   </select>
                 </div>
-                {/* Add other filters similarly */}
               </div>
             )}
 
@@ -814,20 +798,21 @@ export default function CoursesPage() {
                 <p className="mb-4 text-gray-600">Try adjusting your filters or search query.</p>
                 <button
                   onClick={clearFilters}
-                  className="px-6 py-2 text-white bg-blue-600 rounded-lg hover:bg-blue-700"
+                  className="px-6 py-2 text-white transition-all bg-blue-600 rounded-lg hover:bg-blue-700 hover:scale-105"
                 >
                   Clear filters
                 </button>
               </div>
             ) : viewMode === 'grid' ? (
               <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-                {sortedCourses.map((course) => (
+                {sortedCourses.map((course, index) => (
                   <Link
                     key={course.id}
                     href={`/courses/${course.id}`}
-                    className="group"
+                    className="group animate-fade-in-up"
+                    style={{ animationDelay: `${index * 0.05}s` }}
                   >
-                    <div className="overflow-hidden transition-all bg-white border-2 border-gray-200 rounded-xl hover:border-blue-500 hover:shadow-xl">
+                    <div className="overflow-hidden transition-all bg-white border-2 border-gray-200 rounded-xl hover:border-blue-500 hover:shadow-2xl hover:-translate-y-2">
                       {/* Thumbnail */}
                       <div className="relative h-48 overflow-hidden bg-gray-100">
                         {course.thumbnail ? (
@@ -889,11 +874,12 @@ export default function CoursesPage() {
               </div>
             ) : (
               <div className="space-y-4">
-                {sortedCourses.map((course) => (
+                {sortedCourses.map((course, index) => (
                   <Link
                     key={course.id}
                     href={`/courses/${course.id}`}
-                    className="block group"
+                    className="block group animate-fade-in"
+                    style={{ animationDelay: `${index * 0.05}s` }}
                   >
                     <div className="overflow-hidden transition-all bg-white border-2 border-gray-200 rounded-xl hover:border-blue-500 hover:shadow-xl">
                       <div className="flex flex-col md:flex-row">
@@ -973,6 +959,63 @@ export default function CoursesPage() {
           </div>
         </div>
       </div>
+
+      <style jsx>{`
+        @keyframes fade-in-up {
+          from {
+            opacity: 0;
+            transform: translateY(20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes fade-in {
+          from { opacity: 0; }
+          to { opacity: 1; }
+        }
+
+        @keyframes slide-down {
+          from {
+            opacity: 0;
+            transform: translateY(-10px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        @keyframes pulse-subtle {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.8; }
+        }
+
+        .animate-fade-in-up {
+          animation: fade-in-up 0.5s ease-out forwards;
+          opacity: 0;
+        }
+
+        .animate-fade-in {
+          animation: fade-in 0.4s ease-out forwards;
+        }
+
+        .animate-slide-down {
+          animation: slide-down 0.3s ease-out forwards;
+        }
+
+        .animate-pulse-subtle {
+          animation: pulse-subtle 2s ease-in-out infinite;
+        }
+
+        .bg-grid-pattern {
+          background-image: linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px),
+                            linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px);
+          background-size: 20px 20px;
+        }
+      `}</style>
     </div>
   );
 }

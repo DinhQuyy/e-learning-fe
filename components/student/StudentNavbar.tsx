@@ -251,7 +251,7 @@ export default function StudentNavbar() {
                   className="w-64 py-2 pr-4 text-sm border border-gray-300 rounded-lg pl-9 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
                 {showSuggestions && courseSearch.trim() && (
-                  <div className="absolute left-0 right-0 z-20 mt-2 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
+                  <div className="absolute left-0 right-0 z-20 mt-2 overflow-hidden bg-white border border-gray-200 rounded-lg shadow-lg">
                     {isSuggesting ? (
                       <div className="px-4 py-3 text-sm text-gray-500">
                         Dang tim...
@@ -476,7 +476,7 @@ export default function StudentNavbar() {
                     className="w-full py-2 pr-4 text-sm border border-gray-300 rounded-lg pl-9 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                   {showSuggestions && courseSearch.trim() && (
-                    <div className="absolute left-0 right-0 z-20 mt-2 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
+                    <div className="absolute left-0 right-0 z-20 mt-2 overflow-hidden bg-white border border-gray-200 rounded-lg shadow-lg">
                       {isSuggesting ? (
                         <div className="px-4 py-3 text-sm text-gray-500">
                           Dang tim...

@@ -1038,7 +1038,7 @@ export default function CourseDetailPage() {
 
   if (categoryRedirect) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
         <div className="text-sm text-gray-500">Loading courses...</div>
       </div>
     );

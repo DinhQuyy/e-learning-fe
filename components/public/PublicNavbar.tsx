@@ -520,7 +520,7 @@ const [isLoadingUser, setIsLoadingUser] = useState(true);
                       className="w-64 py-2 pr-4 text-sm border border-gray-300 rounded-lg pl-9 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                     />
                     {showSuggestions && courseSearch.trim() && (
-                      <div className="absolute left-0 right-0 z-20 mt-2 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
+                      <div className="absolute left-0 right-0 z-20 mt-2 overflow-hidden bg-white border border-gray-200 rounded-lg shadow-lg">
                         {isSuggesting ? (
                           <div className="px-4 py-3 text-sm text-gray-500">
                             Dang tim...
@@ -749,7 +749,7 @@ const [isLoadingUser, setIsLoadingUser] = useState(true);
                     className="w-full py-2 pr-4 text-sm border border-gray-300 rounded-lg pl-9 focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
                   {showSuggestions && courseSearch.trim() && (
-                    <div className="absolute left-0 right-0 z-20 mt-2 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-lg">
+                    <div className="absolute left-0 right-0 z-20 mt-2 overflow-hidden bg-white border border-gray-200 rounded-lg shadow-lg">
                       {isSuggesting ? (
                         <div className="px-4 py-3 text-sm text-gray-500">
                           Dang tim...
@@ -806,7 +806,7 @@ const [isLoadingUser, setIsLoadingUser] = useState(true);
                 {showUserActions ? (
                   <>
                     <div className="flex items-center gap-3 px-4 py-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-gradient-to-r from-blue-600 to-purple-600 text-sm font-semibold text-white">
+                      <div className="flex items-center justify-center w-10 h-10 text-sm font-semibold text-white rounded-full bg-gradient-to-r from-blue-600 to-purple-600">
                         {userInitial}
                       </div>
                       <div>
@@ -831,7 +831,7 @@ const [isLoadingUser, setIsLoadingUser] = useState(true);
                     <button
                       type="button"
                       onClick={handleLogout}
-                      className="block w-full rounded-lg px-4 py-3 text-left font-semibold text-red-600 transition-colors hover:bg-red-50"
+                      className="block w-full px-4 py-3 font-semibold text-left text-red-600 transition-colors rounded-lg hover:bg-red-50"
                     >
                       {authCopy.logout}
                     </button>
@@ -888,9 +888,9 @@ const [isLoadingUser, setIsLoadingUser] = useState(true);
             <button
               type="button"
               onClick={closeAuthModal}
-              className="absolute right-4 top-4 z-10 rounded-full bg-white p-2 text-gray-600 shadow-sm transition hover:text-gray-900"
+              className="absolute z-10 p-2 text-gray-600 transition bg-white rounded-full shadow-sm right-4 top-4 hover:text-gray-900"
             >
-              <X className="h-4 w-4" />
+              <X className="w-4 h-4" />
             </button>
             <AuthCard
               title={
@@ -901,7 +901,7 @@ const [isLoadingUser, setIsLoadingUser] = useState(true);
                   : authCopy.forgotTitle
               }
             >
-              <div className="flex rounded-lg bg-gray-100 p-1 text-sm">
+              <div className="flex p-1 text-sm bg-gray-100 rounded-lg">
                 <button
                   type="button"
                   onClick={() => setAuthMode('login')}
@@ -946,7 +946,7 @@ const [isLoadingUser, setIsLoadingUser] = useState(true);
                   <div className="mb-4">
                     <label
                       htmlFor="login_password"
-                      className="mb-1 block text-sm font-medium text-gray-700"
+                      className="block mb-1 text-sm font-medium text-gray-700"
                     >
                       {authCopy.password}
                     </label>
@@ -958,29 +958,29 @@ const [isLoadingUser, setIsLoadingUser] = useState(true);
                         placeholder="********"
                         value={loginPassword}
                         onChange={(event) => setLoginPassword(event.target.value)}
-                        className="w-full rounded-md border px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 pr-10 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                       <button
                         type="button"
                         onClick={() => setShowLoginPassword((prev) => !prev)}
                         aria-label={showLoginPassword ? 'Hide password' : 'Show password'}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-gray-500 transition hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="absolute p-1 text-gray-500 transition -translate-y-1/2 rounded right-2 top-1/2 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         {showLoginPassword ? (
-                          <EyeOff className="h-4 w-4" />
+                          <EyeOff className="w-4 h-4" />
                         ) : (
-                          <Eye className="h-4 w-4" />
+                          <Eye className="w-4 h-4" />
                         )}
                       </button>
                     </div>
                   </div>
-                  <div className="mt-2 flex items-center justify-between text-sm text-gray-500">
+                  <div className="flex items-center justify-between mt-2 text-sm text-gray-500">
                     <label className="flex items-center gap-2">
                       <input
                         type="checkbox"
                         checked={loginRememberMe}
                         onChange={(event) => setLoginRememberMe(event.target.checked)}
-                        className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
                       />
                       Ghi nho mat khau
                     </label>
@@ -994,18 +994,18 @@ const [isLoadingUser, setIsLoadingUser] = useState(true);
                   </div>
 
                   {loginError && (
-                    <p className="mt-2 text-center text-sm text-red-500">{loginError}</p>
+                    <p className="mt-2 text-sm text-center text-red-500">{loginError}</p>
                   )}
 
                   <button
                     type="submit"
                     disabled={loginLoading}
-                    className="mt-4 w-full rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 py-2 text-white transition hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-70"
+                    className="w-full py-2 mt-4 text-white transition rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-70"
                   >
                     {loginLoading ? authCopy.loginLoading : authCopy.login}
                   </button>
 
-                  <p className="mt-4 text-center text-sm text-gray-500">
+                  <p className="mt-4 text-sm text-center text-gray-500">
                     {authCopy.noAccount}{' '}
                     <button
                       type="button"
@@ -1036,7 +1036,7 @@ const [isLoadingUser, setIsLoadingUser] = useState(true);
                   <div className="mb-4">
                     <label
                       htmlFor="register_password"
-                      className="mb-1 block text-sm font-medium text-gray-700"
+                      className="block mb-1 text-sm font-medium text-gray-700"
                     >
                       {authCopy.password}
                     </label>
@@ -1048,18 +1048,18 @@ const [isLoadingUser, setIsLoadingUser] = useState(true);
                         placeholder="********"
                         value={registerPassword}
                         onChange={(event) => setRegisterPassword(event.target.value)}
-                        className="w-full rounded-md border px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 pr-10 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                       <button
                         type="button"
                         onClick={() => setShowRegisterPassword((prev) => !prev)}
                         aria-label={showRegisterPassword ? 'Hide password' : 'Show password'}
-                        className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-gray-500 transition hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="absolute p-1 text-gray-500 transition -translate-y-1/2 rounded right-2 top-1/2 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         {showRegisterPassword ? (
-                          <EyeOff className="h-4 w-4" />
+                          <EyeOff className="w-4 h-4" />
                         ) : (
-                          <Eye className="h-4 w-4" />
+                          <Eye className="w-4 h-4" />
                         )}
                       </button>
                     </div>
@@ -1067,7 +1067,7 @@ const [isLoadingUser, setIsLoadingUser] = useState(true);
                   <div className="mb-4">
                     <label
                       htmlFor="register_confirm_password"
-                      className="mb-1 block text-sm font-medium text-gray-700"
+                      className="block mb-1 text-sm font-medium text-gray-700"
                     >
                       {authCopy.confirmPassword}
                     </label>
@@ -1079,7 +1079,7 @@ const [isLoadingUser, setIsLoadingUser] = useState(true);
                         placeholder="********"
                         value={registerConfirmPassword}
                         onChange={(event) => setRegisterConfirmPassword(event.target.value)}
-                        className="w-full rounded-md border px-3 py-2 pr-10 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="w-full px-3 py-2 pr-10 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
                       />
                       <button
                         type="button"
@@ -1087,22 +1087,22 @@ const [isLoadingUser, setIsLoadingUser] = useState(true);
                         aria-label={
                           showRegisterConfirmPassword ? 'Hide password' : 'Show password'
                         }
-                        className="absolute right-2 top-1/2 -translate-y-1/2 rounded p-1 text-gray-500 transition hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="absolute p-1 text-gray-500 transition -translate-y-1/2 rounded right-2 top-1/2 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         {showRegisterConfirmPassword ? (
-                          <EyeOff className="h-4 w-4" />
+                          <EyeOff className="w-4 h-4" />
                         ) : (
-                          <Eye className="h-4 w-4" />
+                          <Eye className="w-4 h-4" />
                         )}
                       </button>
                     </div>
                   </div>
 
                   {registerError && (
-                    <p className="mt-2 text-center text-sm text-red-500">{registerError}</p>
+                    <p className="mt-2 text-sm text-center text-red-500">{registerError}</p>
                   )}
                   {registerSuccess && (
-                    <p className="mt-2 text-center text-sm text-green-600">
+                    <p className="mt-2 text-sm text-center text-green-600">
                       {registerSuccess}
                     </p>
                   )}
@@ -1110,12 +1110,12 @@ const [isLoadingUser, setIsLoadingUser] = useState(true);
                   <button
                     type="submit"
                     disabled={registerLoading}
-                    className="mt-4 w-full rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 py-2 text-white transition hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-70"
+                    className="w-full py-2 mt-4 text-white transition rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-70"
                   >
                     {registerLoading ? authCopy.registerLoading : authCopy.register}
                   </button>
 
-                  <p className="mt-4 text-center text-sm text-gray-500">
+                  <p className="mt-4 text-sm text-center text-gray-500">
                     {authCopy.haveAccount}{' '}
                     <button
                       type="button"
@@ -1139,10 +1139,10 @@ const [isLoadingUser, setIsLoadingUser] = useState(true);
                   />
 
                   {forgotError && (
-                    <p className="mt-2 text-center text-sm text-red-500">{forgotError}</p>
+                    <p className="mt-2 text-sm text-center text-red-500">{forgotError}</p>
                   )}
                   {forgotSuccess && (
-                    <p className="mt-2 text-center text-sm text-green-600">
+                    <p className="mt-2 text-sm text-center text-green-600">
                       {forgotSuccess}
                     </p>
                   )}
@@ -1150,12 +1150,12 @@ const [isLoadingUser, setIsLoadingUser] = useState(true);
                   <button
                     type="submit"
                     disabled={forgotLoading}
-                    className="mt-4 w-full rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 py-2 text-white transition hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-70"
+                    className="w-full py-2 mt-4 text-white transition rounded-lg bg-gradient-to-r from-blue-600 to-purple-600 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-70"
                   >
                     {forgotLoading ? authCopy.forgotLoading : authCopy.forgotSubmit}
                   </button>
 
-                  <p className="mt-4 text-center text-sm text-gray-500">
+                  <p className="mt-4 text-sm text-center text-gray-500">
                     <button
                       type="button"
                       onClick={() => setAuthMode('login')}

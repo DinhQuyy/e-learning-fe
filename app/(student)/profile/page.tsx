@@ -620,12 +620,19 @@ export default function ProfilePage() {
     },
   ];
 
-  const settingsPanels = [
-    { id: 'password', label: 'Đổi mật khẩu', icon: Lock },
-    { id: 'notifications', label: 'Cài đặt thông báo', icon: Bell },
-    { id: 'privacy', label: 'Quyền riêng tư', icon: Shield },
-    { id: 'delete', label: 'Xóa tài khoản', icon: Trash2, tone: 'danger' },
-  ] as const;
+  type SettingsPanelItem = {
+  id: SettingsPanel;
+  label: string;
+  icon: typeof Lock | typeof Bell | typeof Shield | typeof Trash2;
+  tone?: 'danger';
+};
+
+const settingsPanels: SettingsPanelItem[] = [
+  { id: 'password', label: 'Đổi mật khẩu', icon: Lock },
+  { id: 'notifications', label: 'Cài đặt thông báo', icon: Bell },
+  { id: 'privacy', label: 'Quyền riêng tư', icon: Shield },
+  { id: 'delete', label: 'Xóa tài khoản', icon: Trash2, tone: 'danger' },
+];
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -844,29 +851,29 @@ export default function ProfilePage() {
 
   return (
     <div
-      className="relative min-h-screen overflow-hidden bg-slate-50 font-sans text-slate-900"
+      className="relative min-h-screen overflow-hidden font-sans bg-slate-50 text-slate-900"
       style={pageStyle}
     >
-      <div aria-hidden className="pointer-events-none absolute inset-0">
+      <div aria-hidden className="absolute inset-0 pointer-events-none">
         <div className="absolute -top-40 left-1/2 h-96 w-96 -translate-x-1/2 rounded-full bg-[radial-gradient(circle,_rgba(14,165,233,0.25),_transparent_60%)]" />
         <div className="absolute top-16 right-[-6rem] h-72 w-72 rounded-full bg-[radial-gradient(circle,_rgba(251,191,36,0.25),_transparent_60%)]" />
         <div className="absolute bottom-[-8rem] left-[-4rem] h-80 w-80 rounded-full bg-[radial-gradient(circle,_rgba(148,163,184,0.25),_transparent_60%)]" />
         <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(248,250,252,0.2),rgba(248,250,252,0.95))]" />
       </div>
-      <div className="relative container px-4 pb-16 pt-10 mx-auto">
+      <div className="container relative px-4 pt-10 pb-16 mx-auto">
         <div className="max-w-6xl mx-auto">
           {errorMessage && (
-            <div className="mb-6 rounded-2xl border border-red-200/70 bg-red-50/80 px-5 py-4 text-sm text-red-700 shadow-sm">
+            <div className="px-5 py-4 mb-6 text-sm text-red-700 border shadow-sm rounded-2xl border-red-200/70 bg-red-50/80">
               {errorMessage}
             </div>
           )}
           {successMessage && (
-            <div className="mb-6 rounded-2xl border border-emerald-200/70 bg-emerald-50/80 px-5 py-4 text-sm text-emerald-700 shadow-sm">
+            <div className="px-5 py-4 mb-6 text-sm border shadow-sm rounded-2xl border-emerald-200/70 bg-emerald-50/80 text-emerald-700">
               {successMessage}
             </div>
           )}
           {isLoadingUser && !errorMessage && (
-            <div className="mb-6 rounded-2xl border border-blue-200/70 bg-blue-50/80 px-5 py-4 text-sm text-blue-700 shadow-sm">
+            <div className="px-5 py-4 mb-6 text-sm text-blue-700 border shadow-sm rounded-2xl border-blue-200/70 bg-blue-50/80">
               Loading profile...
             </div>
           )}
@@ -881,7 +888,7 @@ export default function ProfilePage() {
                 <img
                   src={displayCoverUrl}
                   alt="Cover photo"
-                  className="absolute inset-0 w-full h-full object-cover"
+                  className="absolute inset-0 object-cover w-full h-full"
                 />
               ) : (
                 <div className="absolute inset-0 bg-gradient-to-r from-sky-500 via-teal-500 to-amber-400" />
@@ -891,7 +898,7 @@ export default function ProfilePage() {
                 type="button"
                 onClick={() => coverInputRef.current?.click()}
                 disabled={isLoadingUser || isUploadingCover}
-                className="absolute bottom-4 right-4 flex items-center gap-2 rounded-full border border-white/70 bg-white/85 px-4 py-2 text-sm font-semibold text-slate-700 shadow-md backdrop-blur-sm transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-70"
+                className="absolute flex items-center gap-2 px-4 py-2 text-sm font-semibold transition-colors border rounded-full shadow-md bottom-4 right-4 border-white/70 bg-white/85 text-slate-700 backdrop-blur-sm hover:bg-white disabled:cursor-not-allowed disabled:opacity-70"
               >
                 <Camera className="w-4 h-4" />
                 Đổi ảnh bìa
@@ -914,10 +921,10 @@ export default function ProfilePage() {
                     <img
                       src={displayAvatarUrl}
                       alt={headerName}
-                      className="h-32 w-32 object-cover rounded-full ring-4 ring-white shadow-xl sm:h-36 sm:w-36"
+                      className="object-cover w-32 h-32 rounded-full shadow-xl ring-4 ring-white sm:h-36 sm:w-36"
                     />
                   ) : (
-                    <div className="flex h-32 w-32 items-center justify-center rounded-full bg-gradient-to-br from-sky-500 via-teal-500 to-amber-400 text-4xl font-bold text-white shadow-xl ring-4 ring-white sm:h-36 sm:w-36">
+                    <div className="flex items-center justify-center w-32 h-32 text-4xl font-bold text-white rounded-full shadow-xl bg-gradient-to-br from-sky-500 via-teal-500 to-amber-400 ring-4 ring-white sm:h-36 sm:w-36">
                       {userInitial}
                     </div>
                   )}
@@ -925,7 +932,7 @@ export default function ProfilePage() {
                     type="button"
                     onClick={() => avatarInputRef.current?.click()}
                     disabled={isLoadingUser || isUploadingAvatar}
-                    className="absolute bottom-2 right-2 flex h-9 w-9 items-center justify-center rounded-full border border-white/80 bg-white/90 shadow-lg backdrop-blur-sm transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-70"
+                    className="absolute flex items-center justify-center transition-colors border rounded-full shadow-lg bottom-2 right-2 h-9 w-9 border-white/80 bg-white/90 backdrop-blur-sm hover:bg-white disabled:cursor-not-allowed disabled:opacity-70"
                   >
                     <Camera className="w-4 h-4 text-gray-700" />
                   </button>
@@ -981,7 +988,7 @@ export default function ProfilePage() {
                   return (
                     <div
                       key={index}
-                      className="group rounded-2xl border border-white/70 bg-white/70 p-4 text-center shadow-sm backdrop-blur-sm transition-all hover:-translate-y-1 hover:shadow-lg"
+                      className="p-4 text-center transition-all border shadow-sm group rounded-2xl border-white/70 bg-white/70 backdrop-blur-sm hover:-translate-y-1 hover:shadow-lg"
                     >
                       <div
                         className={`mx-auto mb-2 flex h-11 w-11 items-center justify-center rounded-xl ring-1 ring-white/70 ${colors[stat.color as keyof typeof colors]}`}
@@ -1017,7 +1024,7 @@ export default function ProfilePage() {
                       <button
                         onClick={handleCancel}
                         disabled={isSaving}
-                        className="rounded-full border border-slate-200 bg-white/80 px-4 py-2 text-slate-700 shadow-sm transition-colors hover:border-slate-300 hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
+                        className="px-4 py-2 transition-colors border rounded-full shadow-sm border-slate-200 bg-white/80 text-slate-700 hover:border-slate-300 hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         <X className="w-4 h-4" />
                       </button>
@@ -1066,7 +1073,7 @@ export default function ProfilePage() {
                         type="email"
                         value={formData.email}
                         disabled
-                        className="w-full rounded-xl border border-slate-200 bg-slate-100/80 px-4 py-2 text-slate-500 shadow-sm cursor-not-allowed"
+                        className="w-full px-4 py-2 border shadow-sm cursor-not-allowed rounded-xl border-slate-200 bg-slate-100/80 text-slate-500"
                       />
                     ) : (
                       <p className="text-gray-900">{emailText}</p>
@@ -1129,13 +1136,13 @@ export default function ProfilePage() {
                     <Link
                       key={cert.id}
                       href="/wishlist"
-                      className="group block overflow-hidden rounded-2xl border border-white/70 bg-white/80 shadow-sm transition-all hover:-translate-y-1 hover:shadow-xl"
+                      className="block overflow-hidden transition-all border shadow-sm group rounded-2xl border-white/70 bg-white/80 hover:-translate-y-1 hover:shadow-xl"
                     >
                       <div className="relative h-36 bg-gradient-to-br from-sky-500 via-teal-500 to-amber-400">
                         <img
                           src={cert.thumbnail}
                           alt={cert.title}
-                          className="h-full w-full object-cover opacity-30 transition-opacity group-hover:opacity-40"
+                          className="object-cover w-full h-full transition-opacity opacity-30 group-hover:opacity-40"
                         />
                         <div className="absolute inset-0 flex items-center justify-center">
                           <Award className="w-12 h-12 text-white" />
@@ -1190,7 +1197,7 @@ export default function ProfilePage() {
                         } disabled:cursor-not-allowed disabled:opacity-60`}
                       >
                         <span className="flex items-center gap-2">
-                          <Icon className="h-4 w-4" />
+                          <Icon className="w-4 h-4" />
                           {panel.label}
                         </span>
                         <span className="text-xs text-slate-400">
@@ -1202,7 +1209,7 @@ export default function ProfilePage() {
                 </div>
 
                 {activeSettingsPanel === 'password' && (
-                  <div className="mt-4 rounded-2xl border border-slate-200/70 bg-white/80 p-4">
+                  <div className="p-4 mt-4 border rounded-2xl border-slate-200/70 bg-white/80">
                     <p className="text-sm text-slate-600">
                       Cập nhật mật khẩu của bạn. Mật khẩu mới tối thiểu 8 ký tự.
                     </p>
@@ -1271,12 +1278,12 @@ export default function ProfilePage() {
                 )}
 
                 {activeSettingsPanel === 'notifications' && (
-                  <div className="mt-4 rounded-2xl border border-slate-200/70 bg-white/80 p-4">
+                  <div className="p-4 mt-4 border rounded-2xl border-slate-200/70 bg-white/80">
                     <p className="text-sm text-slate-600">
                       Chọn các thông báo bạn muốn nhận từ hệ thống.
                     </p>
                     <div className="mt-4 space-y-3">
-                      <label className="flex items-center justify-between gap-3 rounded-xl border border-slate-200/70 bg-white/70 px-3 py-3">
+                      <label className="flex items-center justify-between gap-3 px-3 py-3 border rounded-xl border-slate-200/70 bg-white/70">
                         <div>
                           <p className="text-sm font-semibold text-slate-700">
                             Email thông báo
@@ -1298,10 +1305,10 @@ export default function ProfilePage() {
                               },
                             }))
                           }
-                          className="h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+                          className="w-4 h-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
                         />
                       </label>
-                      <label className="flex items-center justify-between gap-3 rounded-xl border border-slate-200/70 bg-white/70 px-3 py-3">
+                      <label className="flex items-center justify-between gap-3 px-3 py-3 border rounded-xl border-slate-200/70 bg-white/70">
                         <div>
                           <p className="text-sm font-semibold text-slate-700">
                             Thông báo đẩy
@@ -1323,10 +1330,10 @@ export default function ProfilePage() {
                               },
                             }))
                           }
-                          className="h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+                          className="w-4 h-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
                         />
                       </label>
-                      <label className="flex items-center justify-between gap-3 rounded-xl border border-slate-200/70 bg-white/70 px-3 py-3">
+                      <label className="flex items-center justify-between gap-3 px-3 py-3 border rounded-xl border-slate-200/70 bg-white/70">
                         <div>
                           <p className="text-sm font-semibold text-slate-700">
                             Cập nhật khóa học
@@ -1348,10 +1355,10 @@ export default function ProfilePage() {
                               },
                             }))
                           }
-                          className="h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+                          className="w-4 h-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
                         />
                       </label>
-                      <label className="flex items-center justify-between gap-3 rounded-xl border border-slate-200/70 bg-white/70 px-3 py-3">
+                      <label className="flex items-center justify-between gap-3 px-3 py-3 border rounded-xl border-slate-200/70 bg-white/70">
                         <div>
                           <p className="text-sm font-semibold text-slate-700">
                             Tin tức & khuyến mãi
@@ -1373,7 +1380,7 @@ export default function ProfilePage() {
                               },
                             }))
                           }
-                          className="h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+                          className="w-4 h-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
                         />
                       </label>
                     </div>
@@ -1381,7 +1388,7 @@ export default function ProfilePage() {
                       type="button"
                       onClick={() => handleSavePreferences('notifications')}
                       disabled={!isAccountReady || isSavingNotifications}
-                      className="mt-4 w-full rounded-full border border-slate-200 bg-white/90 px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+                      className="w-full px-4 py-2 mt-4 text-sm font-semibold transition-colors border rounded-full shadow-sm border-slate-200 bg-white/90 text-slate-700 hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {isSavingNotifications
                         ? 'Đang lưu...'
@@ -1391,7 +1398,7 @@ export default function ProfilePage() {
                 )}
 
                 {activeSettingsPanel === 'privacy' && (
-                  <div className="mt-4 rounded-2xl border border-slate-200/70 bg-white/80 p-4">
+                  <div className="p-4 mt-4 border rounded-2xl border-slate-200/70 bg-white/80">
                     <p className="text-sm text-slate-600">
                       Kiểm soát nội dung hiển thị trên hồ sơ của bạn.
                     </p>
@@ -1420,7 +1427,7 @@ export default function ProfilePage() {
                           <option value="private">Chỉ mình tôi</option>
                         </select>
                       </div>
-                      <label className="flex items-center justify-between gap-3 rounded-xl border border-slate-200/70 bg-white/70 px-3 py-3">
+                      <label className="flex items-center justify-between gap-3 px-3 py-3 border rounded-xl border-slate-200/70 bg-white/70">
                         <div>
                           <p className="text-sm font-semibold text-slate-700">
                             Hiển thị email
@@ -1442,10 +1449,10 @@ export default function ProfilePage() {
                               },
                             }))
                           }
-                          className="h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+                          className="w-4 h-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
                         />
                       </label>
-                      <label className="flex items-center justify-between gap-3 rounded-xl border border-slate-200/70 bg-white/70 px-3 py-3">
+                      <label className="flex items-center justify-between gap-3 px-3 py-3 border rounded-xl border-slate-200/70 bg-white/70">
                         <div>
                           <p className="text-sm font-semibold text-slate-700">
                             Hiển thị vị trí
@@ -1467,10 +1474,10 @@ export default function ProfilePage() {
                               },
                             }))
                           }
-                          className="h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+                          className="w-4 h-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
                         />
                       </label>
-                      <label className="flex items-center justify-between gap-3 rounded-xl border border-slate-200/70 bg-white/70 px-3 py-3">
+                      <label className="flex items-center justify-between gap-3 px-3 py-3 border rounded-xl border-slate-200/70 bg-white/70">
                         <div>
                           <p className="text-sm font-semibold text-slate-700">
                             Hiển thị chứng chỉ
@@ -1492,7 +1499,7 @@ export default function ProfilePage() {
                               },
                             }))
                           }
-                          className="h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
+                          className="w-4 h-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500"
                         />
                       </label>
                     </div>
@@ -1500,7 +1507,7 @@ export default function ProfilePage() {
                       type="button"
                       onClick={() => handleSavePreferences('privacy')}
                       disabled={!isAccountReady || isSavingPrivacy}
-                      className="mt-4 w-full rounded-full border border-slate-200 bg-white/90 px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
+                      className="w-full px-4 py-2 mt-4 text-sm font-semibold transition-colors border rounded-full shadow-sm border-slate-200 bg-white/90 text-slate-700 hover:bg-white disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {isSavingPrivacy ? 'Đang lưu...' : 'Lưu quyền riêng tư'}
                     </button>
@@ -1508,7 +1515,7 @@ export default function ProfilePage() {
                 )}
 
                 {activeSettingsPanel === 'delete' && (
-                  <div className="mt-4 rounded-2xl border border-red-200/70 bg-red-50/60 p-4">
+                  <div className="p-4 mt-4 border rounded-2xl border-red-200/70 bg-red-50/60">
                     <p className="text-sm text-red-700">
                       Hành động này sẽ xóa vĩnh viễn tài khoản và dữ liệu của
                       bạn.
@@ -1528,7 +1535,7 @@ export default function ProfilePage() {
                               confirmText: event.target.value,
                             }))
                           }
-                          className="mt-2 w-full rounded-xl border border-red-200 bg-white/80 px-4 py-2 text-slate-900 shadow-sm focus:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-200 disabled:cursor-not-allowed disabled:bg-red-50/80"
+                          className="w-full px-4 py-2 mt-2 border border-red-200 shadow-sm rounded-xl bg-white/80 text-slate-900 focus:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-200 disabled:cursor-not-allowed disabled:bg-red-50/80"
                         />
                       </div>
                       <div>
@@ -1545,7 +1552,7 @@ export default function ProfilePage() {
                               password: event.target.value,
                             }))
                           }
-                          className="mt-2 w-full rounded-xl border border-red-200 bg-white/80 px-4 py-2 text-slate-900 shadow-sm focus:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-200 disabled:cursor-not-allowed disabled:bg-red-50/80"
+                          className="w-full px-4 py-2 mt-2 border border-red-200 shadow-sm rounded-xl bg-white/80 text-slate-900 focus:border-red-400 focus:outline-none focus:ring-2 focus:ring-red-200 disabled:cursor-not-allowed disabled:bg-red-50/80"
                         />
                       </div>
                     </div>
@@ -1553,7 +1560,7 @@ export default function ProfilePage() {
                       type="button"
                       onClick={handleDeleteAccount}
                       disabled={!isAccountReady || isDeletingAccount}
-                      className="mt-4 w-full rounded-full bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
+                      className="w-full px-4 py-2 mt-4 text-sm font-semibold text-white transition-colors bg-red-600 rounded-full shadow-sm hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-60"
                     >
                       {isDeletingAccount ? 'Đang xóa...' : 'Xóa tài khoản'}
                     </button>
@@ -1565,8 +1572,8 @@ export default function ProfilePage() {
         </div>
       </div>
       {isCropOpen && cropImageSrc && activeCropConfig && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 px-4 py-6">
-          <div className="w-full max-w-3xl rounded-3xl bg-white/95 p-6 shadow-2xl backdrop-blur">
+        <div className="fixed inset-0 z-50 flex items-center justify-center px-4 py-6 bg-slate-900/70">
+          <div className="w-full max-w-3xl p-6 shadow-2xl rounded-3xl bg-white/95 backdrop-blur">
             <div className="flex items-start justify-between gap-4">
               <div>
                 <h3 className="text-lg font-bold text-gray-900">
@@ -1579,9 +1586,9 @@ export default function ProfilePage() {
               <button
                 type="button"
                 onClick={closeCropper}
-                className="rounded-full p-2 text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-700"
+                className="p-2 text-gray-500 transition-colors rounded-full hover:bg-gray-100 hover:text-gray-700"
               >
-                <X className="h-5 w-5" />
+                <X className="w-5 h-5" />
               </button>
             </div>
 
@@ -1593,7 +1600,7 @@ export default function ProfilePage() {
                   onPointerMove={handleCropPointerMove}
                   onPointerUp={handleCropPointerUp}
                   onPointerLeave={handleCropPointerUp}
-                  className="relative cursor-grab select-none overflow-hidden rounded-2xl bg-slate-100/80 shadow-inner touch-none"
+                  className="relative overflow-hidden shadow-inner select-none cursor-grab rounded-2xl bg-slate-100/80 touch-none"
                   style={activeCropConfig.frameStyle}
                 >
                   <img
@@ -1609,14 +1616,14 @@ export default function ProfilePage() {
                     }}
                   />
                   {cropMode === 'avatar' ? (
-                    <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
+                    <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
                       <div className="h-[85%] w-[85%] rounded-full border-2 border-white/90" />
                     </div>
                   ) : (
-                    <div className="pointer-events-none absolute inset-0 border-2 border-white/90" />
+                    <div className="absolute inset-0 border-2 pointer-events-none border-white/90" />
                   )}
                 </div>
-                <div className="flex w-full items-center gap-3 text-xs text-gray-500">
+                <div className="flex items-center w-full gap-3 text-xs text-gray-500">
                   <span>Thu nhỏ</span>
                   <input
                     type="range"
@@ -1632,11 +1639,11 @@ export default function ProfilePage() {
               </div>
             </div>
 
-            <div className="mt-6 flex flex-wrap justify-end gap-3">
+            <div className="flex flex-wrap justify-end gap-3 mt-6">
               <button
                 type="button"
                 onClick={closeCropper}
-                className="rounded-full border border-slate-200 bg-white/80 px-4 py-2 text-sm font-semibold text-slate-700 transition-colors hover:bg-white"
+                className="px-4 py-2 text-sm font-semibold transition-colors border rounded-full border-slate-200 bg-white/80 text-slate-700 hover:bg-white"
               >
                 Hủy
               </button>

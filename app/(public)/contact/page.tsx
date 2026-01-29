@@ -54,11 +54,11 @@ export default function ContactPage() {
   return (
     <div className="min-h-screen bg-white">
       <section className="relative overflow-hidden bg-gradient-to-br from-blue-50 via-white to-purple-50">
-        <div className="container mx-auto px-4 py-16 md:py-24">
+        <div className="container px-4 py-16 mx-auto md:py-24">
           <div className="grid items-center gap-10 lg:grid-cols-2">
             <div className="space-y-6">
-              <span className="inline-flex items-center gap-2 rounded-full bg-blue-100 px-4 py-2 text-sm font-semibold text-blue-700">
-                <MessageCircle className="h-4 w-4" />
+              <span className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-blue-700 bg-blue-100 rounded-full">
+                <MessageCircle className="w-4 h-4" />
                 Hỗ trợ nhanh - phản hồi trong 24 giờ
               </span>
               <h1 className="text-4xl font-bold text-gray-900 md:text-5xl">
@@ -71,23 +71,23 @@ export default function ContactPage() {
               <div className="flex flex-wrap gap-4">
                 <Link
                   href="/about"
-                  className="inline-flex items-center gap-2 rounded-xl border-2 border-gray-300 px-6 py-3 font-semibold text-gray-700 transition hover:border-blue-600 hover:text-blue-600"
+                  className="inline-flex items-center gap-2 px-6 py-3 font-semibold text-gray-700 transition border-2 border-gray-300 rounded-xl hover:border-blue-600 hover:text-blue-600"
                 >
                   Tìm hiểu về LearnHub
                 </Link>
                 <Link
                   href="/courses"
-                  className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-3 font-semibold text-white transition hover:shadow-lg"
+                  className="inline-flex items-center gap-2 px-6 py-3 font-semibold text-white transition rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 hover:shadow-lg"
                 >
                   Xem khóa học
                 </Link>
               </div>
             </div>
             <div className="relative">
-              <div className="rounded-3xl border border-blue-100 bg-white/80 p-6 shadow-xl backdrop-blur">
+              <div className="p-6 border border-blue-100 shadow-xl rounded-3xl bg-white/80 backdrop-blur">
                 <div className="space-y-4">
-                  <div className="flex items-center gap-3 rounded-2xl bg-blue-50 p-4">
-                    <Send className="h-6 w-6 text-blue-600" />
+                  <div className="flex items-center gap-3 p-4 rounded-2xl bg-blue-50">
+                    <Send className="w-6 h-6 text-blue-600" />
                     <div>
                       <p className="text-sm text-gray-600">Email phản hồi</p>
                       <p className="font-semibold text-gray-900">
@@ -95,8 +95,8 @@ export default function ContactPage() {
                       </p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-3 rounded-2xl bg-purple-50 p-4">
-                    <Phone className="h-6 w-6 text-purple-600" />
+                  <div className="flex items-center gap-3 p-4 rounded-2xl bg-purple-50">
+                    <Phone className="w-6 h-6 text-purple-600" />
                     <div>
                       <p className="text-sm text-gray-600">Hotline ưu tiên</p>
                       <p className="font-semibold text-gray-900">
@@ -104,31 +104,31 @@ export default function ContactPage() {
                       </p>
                     </div>
                   </div>
-                  <div className="rounded-2xl border border-dashed border-gray-200 bg-white p-4 text-sm text-gray-600">
+                  <div className="p-4 text-sm text-gray-600 bg-white border border-gray-200 border-dashed rounded-2xl">
                     Đội ngũ chăm sóc học viên sẽ xác nhận yêu cầu của bạn trong
                     vòng 24 giờ làm việc.
                   </div>
                 </div>
               </div>
-              <div className="absolute -bottom-8 -left-8 h-40 w-40 rounded-full bg-blue-200/40 blur-3xl" />
-              <div className="absolute -right-8 top-10 h-40 w-40 rounded-full bg-purple-200/40 blur-3xl" />
+              <div className="absolute w-40 h-40 rounded-full -bottom-8 -left-8 bg-blue-200/40 blur-3xl" />
+              <div className="absolute w-40 h-40 rounded-full -right-8 top-10 bg-purple-200/40 blur-3xl" />
             </div>
           </div>
         </div>
       </section>
 
-      <section className="border-y bg-gray-50 py-12">
-        <div className="container mx-auto px-4">
+      <section className="py-12 border-y bg-gray-50">
+        <div className="container px-4 mx-auto">
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             {contactCards.map((card) => {
               const Icon = card.icon;
               return (
                 <div
                   key={card.title}
-                  className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm"
+                  className="p-6 bg-white border border-gray-200 shadow-sm rounded-2xl"
                 >
-                  <div className="mb-4 inline-flex rounded-xl bg-blue-100 p-3 text-blue-600">
-                    <Icon className="h-6 w-6" />
+                  <div className="inline-flex p-3 mb-4 text-blue-600 bg-blue-100 rounded-xl">
+                    <Icon className="w-6 h-6" />
                   </div>
                   <h3 className="text-lg font-semibold text-gray-900">
                     {card.title}
@@ -147,9 +147,9 @@ export default function ContactPage() {
       </section>
 
       <section className="py-16">
-        <div className="container mx-auto px-4">
+        <div className="container px-4 mx-auto">
           <div className="grid gap-10 lg:grid-cols-[1.1fr_0.9fr]">
-            <div className="rounded-3xl border border-gray-200 bg-white p-8 shadow-sm">
+            <div className="p-8 bg-white border border-gray-200 shadow-sm rounded-3xl">
               <h2 className="text-3xl font-bold text-gray-900">
                 Gửi yêu cầu cho chúng tôi
               </h2>
@@ -165,7 +165,7 @@ export default function ContactPage() {
                     <input
                       type="text"
                       placeholder="Nguyễn Văn A"
-                      className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 focus:border-blue-500 focus:outline-none"
+                      className="w-full px-4 py-3 mt-2 border border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none"
                     />
                   </div>
                   <div>
@@ -175,7 +175,7 @@ export default function ContactPage() {
                     <input
                       type="email"
                       placeholder="email@example.com"
-                      className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 focus:border-blue-500 focus:outline-none"
+                      className="w-full px-4 py-3 mt-2 border border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none"
                     />
                   </div>
                 </div>
@@ -186,7 +186,7 @@ export default function ContactPage() {
                   <input
                     type="text"
                     placeholder="Bạn cần hỗ trợ về khóa học, thanh toán..."
-                    className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 focus:border-blue-500 focus:outline-none"
+                    className="w-full px-4 py-3 mt-2 border border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none"
                   />
                 </div>
                 <div>
@@ -196,21 +196,21 @@ export default function ContactPage() {
                   <textarea
                     rows={5}
                     placeholder="Mô tả chi tiết yêu cầu của bạn"
-                    className="mt-2 w-full rounded-xl border border-gray-200 px-4 py-3 focus:border-blue-500 focus:outline-none"
+                    className="w-full px-4 py-3 mt-2 border border-gray-200 rounded-xl focus:border-blue-500 focus:outline-none"
                   />
                 </div>
                 <button
                   type="button"
-                  className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-3 font-semibold text-white transition hover:shadow-lg"
+                  className="inline-flex items-center gap-2 px-6 py-3 font-semibold text-white transition rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 hover:shadow-lg"
                 >
                   Gửi yêu cầu
-                  <Send className="h-4 w-4" />
+                  <Send className="w-4 h-4" />
                 </button>
               </form>
             </div>
 
             <div className="space-y-6">
-              <div className="rounded-3xl border border-gray-200 bg-gray-50 p-6">
+              <div className="p-6 border border-gray-200 rounded-3xl bg-gray-50">
                 <h3 className="text-xl font-semibold text-gray-900">
                   Bản đồ văn phòng
                 </h3>
@@ -218,18 +218,18 @@ export default function ContactPage() {
                   Bản đồ đang được cập nhật. Bạn có thể liên hệ hotline để được
                   hướng dẫn đường đi nhanh nhất.
                 </p>
-                <div className="mt-4 flex h-48 items-center justify-center rounded-2xl border border-dashed border-gray-300 bg-white text-sm text-gray-500">
+                <div className="flex items-center justify-center h-48 mt-4 text-sm text-gray-500 bg-white border border-gray-300 border-dashed rounded-2xl">
                   Khu vực hiển thị bản đồ
                 </div>
               </div>
 
-              <div className="rounded-3xl border border-gray-200 bg-white p-6 shadow-sm">
+              <div className="p-6 bg-white border border-gray-200 shadow-sm rounded-3xl">
                 <h3 className="text-xl font-semibold text-gray-900">
                   Câu hỏi thường gặp
                 </h3>
                 <div className="mt-4 space-y-4">
                   {faqs.map((faq) => (
-                    <div key={faq.question} className="rounded-2xl bg-gray-50 p-4">
+                    <div key={faq.question} className="p-4 rounded-2xl bg-gray-50">
                       <p className="font-semibold text-gray-900">
                         {faq.question}
                       </p>
@@ -239,7 +239,7 @@ export default function ContactPage() {
                 </div>
                 <Link
                   href="/courses"
-                  className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-blue-600 hover:text-blue-700"
+                  className="inline-flex items-center gap-2 mt-5 text-sm font-semibold text-blue-600 hover:text-blue-700"
                 >
                   Xem thêm tài nguyên học tập
                 </Link>

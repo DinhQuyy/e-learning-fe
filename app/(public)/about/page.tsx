@@ -96,8 +96,8 @@ export default function AboutPage() {
         <div className="container px-4 py-16 mx-auto md:py-24">
           <div className="grid items-center gap-12 lg:grid-cols-2">
             <div className="space-y-6">
-              <span className="inline-flex items-center gap-2 rounded-full bg-blue-100 px-4 py-2 text-sm font-semibold text-blue-700">
-                <Rocket className="h-4 w-4" />
+              <span className="inline-flex items-center gap-2 px-4 py-2 text-sm font-semibold text-blue-700 bg-blue-100 rounded-full">
+                <Rocket className="w-4 h-4" />
                 Hành trình xây dựng LearnHub
               </span>
               <h1 className="text-4xl font-bold text-gray-900 md:text-5xl">
@@ -112,13 +112,13 @@ export default function AboutPage() {
               <div className="flex flex-wrap gap-4">
                 <Link
                   href="/courses"
-                  className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 px-6 py-3 font-semibold text-white transition hover:shadow-lg"
+                  className="inline-flex items-center gap-2 px-6 py-3 font-semibold text-white transition rounded-xl bg-gradient-to-r from-blue-600 to-purple-600 hover:shadow-lg"
                 >
                   Khám phá khóa học
                 </Link>
                 <Link
                   href="/contact"
-                  className="inline-flex items-center gap-2 rounded-xl border-2 border-gray-300 px-6 py-3 font-semibold text-gray-700 transition hover:border-blue-600 hover:text-blue-600"
+                  className="inline-flex items-center gap-2 px-6 py-3 font-semibold text-gray-700 transition border-2 border-gray-300 rounded-xl hover:border-blue-600 hover:text-blue-600"
                 >
                   Liên hệ hợp tác
                 </Link>
@@ -128,27 +128,27 @@ export default function AboutPage() {
               <img
                 src="https://images.unsplash.com/photo-1521737604893-d14cc237f11d?w=900&auto=format&fit=crop&q=80"
                 alt="Team collaboration"
-                className="relative z-10 w-full rounded-3xl shadow-2xl"
+                className="relative z-10 w-full shadow-2xl rounded-3xl"
               />
-              <div className="absolute -right-6 top-6 h-48 w-48 rounded-full bg-purple-300/30 blur-3xl" />
-              <div className="absolute -bottom-6 -left-6 h-48 w-48 rounded-full bg-blue-300/30 blur-3xl" />
+              <div className="absolute w-48 h-48 rounded-full -right-6 top-6 bg-purple-300/30 blur-3xl" />
+              <div className="absolute w-48 h-48 rounded-full -bottom-6 -left-6 bg-blue-300/30 blur-3xl" />
             </div>
           </div>
         </div>
       </section>
 
-      <section className="border-y bg-white py-12">
-        <div className="container mx-auto px-4">
+      <section className="py-12 bg-white border-y">
+        <div className="container px-4 mx-auto">
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
             {stats.map((stat) => {
               const Icon = stat.icon;
               return (
                 <div
                   key={stat.label}
-                  className="flex items-center gap-4 rounded-2xl border border-gray-100 bg-gray-50 p-5"
+                  className="flex items-center gap-4 p-5 border border-gray-100 rounded-2xl bg-gray-50"
                 >
-                  <div className="rounded-xl bg-blue-100 p-3 text-blue-600">
-                    <Icon className="h-6 w-6" />
+                  <div className="p-3 text-blue-600 bg-blue-100 rounded-xl">
+                    <Icon className="w-6 h-6" />
                   </div>
                   <div>
                     <p className="text-xl font-bold text-gray-900">
@@ -163,9 +163,9 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className="bg-gray-50 py-16">
-        <div className="container mx-auto px-4">
-          <div className="mb-10 max-w-2xl">
+      <section className="py-16 bg-gray-50">
+        <div className="container px-4 mx-auto">
+          <div className="max-w-2xl mb-10">
             <h2 className="mb-4 text-3xl font-bold text-gray-900">
               Giá trị cốt lõi của LearnHub
             </h2>
@@ -180,10 +180,10 @@ export default function AboutPage() {
               return (
                 <div
                   key={value.title}
-                  className="rounded-2xl border border-gray-200 bg-white p-6 shadow-sm transition hover:shadow-md"
+                  className="p-6 transition bg-white border border-gray-200 shadow-sm rounded-2xl hover:shadow-md"
                 >
-                  <div className="mb-4 inline-flex rounded-xl bg-blue-100 p-3 text-blue-600">
-                    <Icon className="h-6 w-6" />
+                  <div className="inline-flex p-3 mb-4 text-blue-600 bg-blue-100 rounded-xl">
+                    <Icon className="w-6 h-6" />
                   </div>
                   <h3 className="mb-2 text-lg font-semibold text-gray-900">
                     {value.title}
@@ -197,8 +197,8 @@ export default function AboutPage() {
       </section>
 
       <section className="py-16">
-        <div className="container mx-auto px-4">
-          <div className="mb-10 max-w-2xl">
+        <div className="container px-4 mx-auto">
+          <div className="max-w-2xl mb-10">
             <h2 className="mb-4 text-3xl font-bold text-gray-900">
               Dấu mốc phát triển
             </h2>
@@ -211,7 +211,7 @@ export default function AboutPage() {
             {milestones.map((milestone) => (
               <div
                 key={milestone.year}
-                className="rounded-2xl border border-gray-200 bg-white p-6"
+                className="p-6 bg-white border border-gray-200 rounded-2xl"
               >
                 <p className="text-sm font-semibold text-blue-600">
                   {milestone.year}
@@ -226,9 +226,9 @@ export default function AboutPage() {
         </div>
       </section>
 
-      <section className="bg-gray-50 py-16">
-        <div className="container mx-auto px-4">
-          <div className="mb-10 max-w-2xl">
+      <section className="py-16 bg-gray-50">
+        <div className="container px-4 mx-auto">
+          <div className="max-w-2xl mb-10">
             <h2 className="mb-4 text-3xl font-bold text-gray-900">
               Đội ngũ dẫn dắt
             </h2>
@@ -241,12 +241,12 @@ export default function AboutPage() {
             {team.map((member) => (
               <div
                 key={member.name}
-                className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm"
+                className="overflow-hidden bg-white border border-gray-200 shadow-sm rounded-2xl"
               >
                 <img
                   src={member.image}
                   alt={member.name}
-                  className="h-56 w-full object-cover"
+                  className="object-cover w-full h-56"
                 />
                 <div className="p-5">
                   <h3 className="text-lg font-semibold text-gray-900">
@@ -261,8 +261,8 @@ export default function AboutPage() {
       </section>
 
       <section className="py-16">
-        <div className="container mx-auto px-4">
-          <div className="rounded-3xl bg-gradient-to-r from-blue-600 to-purple-600 p-10 text-white md:p-14">
+        <div className="container px-4 mx-auto">
+          <div className="p-10 text-white rounded-3xl bg-gradient-to-r from-blue-600 to-purple-600 md:p-14">
             <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
               <div className="max-w-xl">
                 <h2 className="text-3xl font-bold">
@@ -276,13 +276,13 @@ export default function AboutPage() {
               <div className="flex flex-wrap gap-3">
                 <Link
                   href="/register"
-                  className="inline-flex items-center gap-2 rounded-xl bg-white px-6 py-3 font-semibold text-blue-600 transition hover:shadow-lg"
+                  className="inline-flex items-center gap-2 px-6 py-3 font-semibold text-blue-600 transition bg-white rounded-xl hover:shadow-lg"
                 >
                   Bắt đầu miễn phí
                 </Link>
                 <Link
                   href="/contact"
-                  className="inline-flex items-center gap-2 rounded-xl border border-white/60 px-6 py-3 font-semibold text-white transition hover:bg-white/10"
+                  className="inline-flex items-center gap-2 px-6 py-3 font-semibold text-white transition border rounded-xl border-white/60 hover:bg-white/10"
                 >
                   Hợp tác cùng chúng tôi
                 </Link>
