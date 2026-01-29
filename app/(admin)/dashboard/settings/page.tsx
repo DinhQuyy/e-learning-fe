@@ -1,16 +1,16 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { 
-  Save, 
-  User, 
-  Bell, 
-  Shield, 
-  Palette,
+import {
+  Save,
+  Bell,
+  Shield,
   Globe,
   Mail,
   Lock,
-  Home
+  Home,
+  CreditCard,
+  Percent,
 } from 'lucide-react';
 import {
   defaultPublicSettings,
@@ -27,6 +27,12 @@ type AdminSettings = {
   emailNotifications: boolean;
   pushNotifications: boolean;
   weeklyReport: boolean;
+  paymentGateway: string;
+  paymentPublicKey: string;
+  paymentSecretKey: string;
+  paymentWebhookSecret: string;
+  platformFeePercent: number;
+  instructorSharePercent: number;
 };
 
 const ADMIN_SETTINGS_KEY = 'elearning.admin-settings';
@@ -38,6 +44,12 @@ const DEFAULT_ADMIN_SETTINGS: AdminSettings = {
   emailNotifications: true,
   pushNotifications: false,
   weeklyReport: true,
+  paymentGateway: 'payos',
+  paymentPublicKey: '',
+  paymentSecretKey: '',
+  paymentWebhookSecret: '',
+  platformFeePercent: 20,
+  instructorSharePercent: 80,
 };
 
 const loadAdminSettings = () => {
@@ -113,18 +125,21 @@ export default function SettingsPage() {
 
   const tabs = [
     { id: 'general', label: 'Chung', icon: Globe },
-    { id: 'landing', label: 'Landing', icon: Home },
-    { id: 'profile', label: 'Hồ sơ', icon: User },
+    { id: 'landing', label: 'Trang đích', icon: Home },
     { id: 'notifications', label: 'Thông báo', icon: Bell },
     { id: 'security', label: 'Bảo mật', icon: Shield },
-    { id: 'appearance', label: 'Giao diện', icon: Palette },
+    { id: 'payments', label: 'Thanh toán', icon: CreditCard },
+    { id: 'revenue', label: 'Chia sẻ doanh thu', icon: Percent },
   ];
 
   const handleSave = async () => {
     saveAdminSettings(settings);
     await savePublicSettings(publicSettings);
-    alert('Da luu cai dat thanh cong!');
+    alert('Đã lưu cài đặt thành công!');
   };
+
+  const revenueTotal =
+    settings.platformFeePercent + settings.instructorSharePercent;
 
   return (
     <div className="space-y-6">
@@ -170,7 +185,7 @@ export default function SettingsPage() {
               <div className="space-y-6">
                 <div>
                   <h2 className="mb-4 text-xl font-bold text-gray-900">
-                    General Settings
+                    Cài đặt chung
                   </h2>
                   <p className="text-sm text-gray-600">
                     Cấu hình chung cho hệ thống
@@ -215,7 +230,7 @@ export default function SettingsPage() {
                   <div className="p-4 border border-gray-200 rounded-lg">
                     <div className="flex items-center justify-between">
                       <span className="text-sm font-medium text-gray-900">
-                        Announcement Bar
+                        Thanh thông báo
                       </span>
                       <input
                         type="checkbox"
@@ -249,7 +264,7 @@ export default function SettingsPage() {
 
                   <div>
                     <label className="block mb-2 text-sm font-medium text-gray-700">
-                      Admin Email
+                      Email quản trị
                     </label>
                     <input
                       type="email"
@@ -274,14 +289,14 @@ export default function SettingsPage() {
                         className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       >
                         <option value="vi">Tiếng Việt</option>
-                        <option value="en">English</option>
+                        <option value="en">Tiếng Anh</option>
                       </select>
                     </div>
 
                     <div>
-                      <label className="block mb-2 text-sm font-medium text-gray-700">
-                        Khu vực
-                      </label>
+                    <label className="block mb-2 text-sm font-medium text-gray-700">
+                      Múi giờ
+                    </label>
                       <select
                         value={settings.timezone}
                         onChange={(e) =>
@@ -314,7 +329,7 @@ export default function SettingsPage() {
                       />
                       <div>
                         <p className="text-sm font-medium text-gray-900">
-                          Maintenance Mode
+                          Chế độ bảo trì
                         </p>
                         <p className="text-xs text-gray-500">
                           Tạm khóa website để bảo trì
@@ -331,26 +346,28 @@ export default function SettingsPage() {
               <div className="space-y-8">
                 <div>
                   <h2 className="mb-4 text-xl font-bold text-gray-900">
-                    Landing Page
+                    Trang đích
                   </h2>
                   <p className="text-sm text-gray-600">
-                    Manage content shown on the student homepage.
+                    Quản lý nội dung hiển thị trên trang chủ học viên.
                   </p>
                 </div>
 
                 <div className="space-y-6">
                   <div className="space-y-4 rounded-lg border border-gray-200 p-4">
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900">Hero</h3>
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        Khu vực nổi bật
+                      </h3>
                       <p className="text-sm text-gray-600">
-                        Main headline, banner, and search.
+                        Tiêu đề chính, banner và tìm kiếm.
                       </p>
                     </div>
 
                     <div className="grid gap-4 md:grid-cols-2">
                       <div>
                         <label className="block mb-2 text-sm font-medium text-gray-700">
-                          Badge text
+                          Nội dung badge
                         </label>
                         <input
                           type="text"
@@ -366,7 +383,7 @@ export default function SettingsPage() {
                       </div>
                       <div>
                         <label className="block mb-2 text-sm font-medium text-gray-700">
-                          Hero title
+                          Tiêu đề khu vực nổi bật
                         </label>
                         <input
                           type="text"
@@ -382,7 +399,7 @@ export default function SettingsPage() {
                       </div>
                       <div>
                         <label className="block mb-2 text-sm font-medium text-gray-700">
-                          Highlight text
+                          Văn bản nổi bật
                         </label>
                         <input
                           type="text"
@@ -398,7 +415,7 @@ export default function SettingsPage() {
                       </div>
                       <div>
                         <label className="block mb-2 text-sm font-medium text-gray-700">
-                          Hero image URL
+                          URL ảnh khu vực nổi bật
                         </label>
                         <input
                           type="text"
@@ -415,9 +432,9 @@ export default function SettingsPage() {
                     </div>
 
                     <div>
-                      <label className="block mb-2 text-sm font-medium text-gray-700">
-                        Hero subtitle
-                      </label>
+                    <label className="block mb-2 text-sm font-medium text-gray-700">
+                        Phụ đề khu vực nổi bật
+                    </label>
                       <textarea
                         value={publicSettings.heroSubtitle}
                         onChange={(e) =>
@@ -434,7 +451,7 @@ export default function SettingsPage() {
                     <div className="grid gap-4 md:grid-cols-2">
                       <div>
                         <label className="block mb-2 text-sm font-medium text-gray-700">
-                          Search placeholder
+                          Gợi ý tìm kiếm
                         </label>
                         <input
                           type="text"
@@ -450,7 +467,7 @@ export default function SettingsPage() {
                       </div>
                       <div>
                         <label className="block mb-2 text-sm font-medium text-gray-700">
-                          Search button
+                          Nút tìm kiếm
                         </label>
                         <input
                           type="text"
@@ -469,7 +486,7 @@ export default function SettingsPage() {
                     <div className="grid gap-4 md:grid-cols-2">
                       <div>
                         <label className="block mb-2 text-sm font-medium text-gray-700">
-                          Primary CTA label
+                          Nhãn kêu gọi hành động chính
                         </label>
                         <input
                           type="text"
@@ -485,7 +502,7 @@ export default function SettingsPage() {
                       </div>
                       <div>
                         <label className="block mb-2 text-sm font-medium text-gray-700">
-                          Primary CTA link
+                          Liên kết kêu gọi hành động chính
                         </label>
                         <input
                           type="text"
@@ -501,7 +518,7 @@ export default function SettingsPage() {
                       </div>
                       <div>
                         <label className="block mb-2 text-sm font-medium text-gray-700">
-                          Secondary CTA label
+                          Nhãn kêu gọi hành động phụ
                         </label>
                         <input
                           type="text"
@@ -517,7 +534,7 @@ export default function SettingsPage() {
                       </div>
                       <div>
                         <label className="block mb-2 text-sm font-medium text-gray-700">
-                          Secondary CTA link
+                          Liên kết kêu gọi hành động phụ
                         </label>
                         <input
                           type="text"
@@ -536,7 +553,7 @@ export default function SettingsPage() {
 
                   <div className="space-y-3 rounded-lg border border-gray-200 p-4">
                     <h3 className="text-lg font-semibold text-gray-900">
-                      Section visibility
+                      Hiển thị khu vực
                     </h3>
                     <div className="grid gap-3 sm:grid-cols-2">
                       <label className="flex items-center gap-2 text-sm text-gray-700">
@@ -551,7 +568,7 @@ export default function SettingsPage() {
                           }
                           className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                         />
-                        Show stats
+                        Hiện thống kê
                       </label>
                       <label className="flex items-center gap-2 text-sm text-gray-700">
                         <input
@@ -565,7 +582,7 @@ export default function SettingsPage() {
                           }
                           className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                         />
-                        Show categories
+                        Hiện danh mục
                       </label>
                       <label className="flex items-center gap-2 text-sm text-gray-700">
                         <input
@@ -579,7 +596,7 @@ export default function SettingsPage() {
                           }
                           className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                         />
-                        Show featured courses
+                        Hiện khóa học nổi bật
                       </label>
                       <label className="flex items-center gap-2 text-sm text-gray-700">
                         <input
@@ -593,7 +610,7 @@ export default function SettingsPage() {
                           }
                           className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                         />
-                        Show features
+                        Hiện tính năng
                       </label>
                       <label className="flex items-center gap-2 text-sm text-gray-700">
                         <input
@@ -607,19 +624,19 @@ export default function SettingsPage() {
                           }
                           className="h-4 w-4 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                         />
-                        Show final CTA
+                        Hiện kêu gọi hành động cuối trang
                       </label>
                     </div>
                   </div>
 
                   <div className="space-y-4 rounded-lg border border-gray-200 p-4">
                     <h3 className="text-lg font-semibold text-gray-900">
-                      Categories section
+                      Khu vực danh mục
                     </h3>
                     <div className="grid gap-4 md:grid-cols-2">
                       <div>
                         <label className="block mb-2 text-sm font-medium text-gray-700">
-                          Title
+                          Tiêu đề
                         </label>
                         <input
                           type="text"
@@ -635,7 +652,7 @@ export default function SettingsPage() {
                       </div>
                       <div>
                         <label className="block mb-2 text-sm font-medium text-gray-700">
-                          Subtitle
+                          Phụ đề
                         </label>
                         <input
                           type="text"
@@ -654,12 +671,12 @@ export default function SettingsPage() {
 
                   <div className="space-y-4 rounded-lg border border-gray-200 p-4">
                     <h3 className="text-lg font-semibold text-gray-900">
-                      Featured courses section
+                      Khu vực khóa học nổi bật
                     </h3>
                     <div className="grid gap-4 md:grid-cols-2">
                       <div>
                         <label className="block mb-2 text-sm font-medium text-gray-700">
-                          Title
+                          Tiêu đề
                         </label>
                         <input
                           type="text"
@@ -675,7 +692,7 @@ export default function SettingsPage() {
                       </div>
                       <div>
                         <label className="block mb-2 text-sm font-medium text-gray-700">
-                          Subtitle
+                          Phụ đề
                         </label>
                         <input
                           type="text"
@@ -691,7 +708,7 @@ export default function SettingsPage() {
                       </div>
                       <div>
                         <label className="block mb-2 text-sm font-medium text-gray-700">
-                          Link label
+                          Nhãn liên kết
                         </label>
                         <input
                           type="text"
@@ -707,7 +724,7 @@ export default function SettingsPage() {
                       </div>
                       <div>
                         <label className="block mb-2 text-sm font-medium text-gray-700">
-                          Link URL
+                          URL liên kết
                         </label>
                         <input
                           type="text"
@@ -726,12 +743,12 @@ export default function SettingsPage() {
 
                   <div className="space-y-4 rounded-lg border border-gray-200 p-4">
                     <h3 className="text-lg font-semibold text-gray-900">
-                      Features section
+                      Khu vực tính năng
                     </h3>
                     <div className="grid gap-4 md:grid-cols-2">
                       <div>
                         <label className="block mb-2 text-sm font-medium text-gray-700">
-                          Title
+                          Tiêu đề
                         </label>
                         <input
                           type="text"
@@ -747,7 +764,7 @@ export default function SettingsPage() {
                       </div>
                       <div>
                         <label className="block mb-2 text-sm font-medium text-gray-700">
-                          Subtitle
+                          Phụ đề
                         </label>
                         <input
                           type="text"
@@ -765,12 +782,14 @@ export default function SettingsPage() {
                   </div>
 
                   <div className="space-y-4 rounded-lg border border-gray-200 p-4">
-                    <h3 className="text-lg font-semibold text-gray-900">Stats</h3>
+                    <h3 className="text-lg font-semibold text-gray-900">
+                      Thống kê
+                    </h3>
                     <div className="grid gap-4 md:grid-cols-2">
                       {publicSettings.stats.map((stat, index) => (
                         <div key={`stat-${index}`} className="space-y-2">
                           <label className="block text-sm font-medium text-gray-700">
-                            Stat {index + 1}
+                            Chỉ số {index + 1}
                           </label>
                           <input
                             type="text"
@@ -811,13 +830,13 @@ export default function SettingsPage() {
 
                   <div className="space-y-4 rounded-lg border border-gray-200 p-4">
                     <h3 className="text-lg font-semibold text-gray-900">
-                      Feature list
+                      Danh sách tính năng
                     </h3>
                     <div className="grid gap-4 md:grid-cols-2">
                       {publicSettings.features.map((feature, index) => (
                         <div key={`feature-${index}`} className="space-y-2">
                           <label className="block text-sm font-medium text-gray-700">
-                            Feature {index + 1}
+                            Tính năng {index + 1}
                           </label>
                           <input
                             type="text"
@@ -858,12 +877,12 @@ export default function SettingsPage() {
 
                   <div className="space-y-4 rounded-lg border border-gray-200 p-4">
                     <h3 className="text-lg font-semibold text-gray-900">
-                      Final CTA section
+                      Khu vực kêu gọi hành động cuối
                     </h3>
                     <div className="grid gap-4 md:grid-cols-2">
                       <div>
                         <label className="block mb-2 text-sm font-medium text-gray-700">
-                          Title
+                          Tiêu đề
                         </label>
                         <input
                           type="text"
@@ -879,7 +898,7 @@ export default function SettingsPage() {
                       </div>
                       <div>
                         <label className="block mb-2 text-sm font-medium text-gray-700">
-                          Subtitle
+                          Phụ đề
                         </label>
                         <input
                           type="text"
@@ -895,7 +914,7 @@ export default function SettingsPage() {
                       </div>
                       <div>
                         <label className="block mb-2 text-sm font-medium text-gray-700">
-                          Button label
+                          Nhãn nút
                         </label>
                         <input
                           type="text"
@@ -911,7 +930,7 @@ export default function SettingsPage() {
                       </div>
                       <div>
                         <label className="block mb-2 text-sm font-medium text-gray-700">
-                          Button URL
+                          URL nút
                         </label>
                         <input
                           type="text"
@@ -931,87 +950,12 @@ export default function SettingsPage() {
               </div>
             )}
 
-            {/* Profile Settings */}
-            {activeTab === 'profile' && (
-              <div className="space-y-6">
-                <div>
-                  <h2 className="mb-4 text-xl font-bold text-gray-900">
-                    Profile Settings
-                  </h2>
-                  <p className="text-sm text-gray-600">
-                    Cập nhật thông tin cá nhân
-                  </p>
-                </div>
-
-                <div className="flex items-center gap-6">
-                  <div className="flex items-center justify-center w-24 h-24 text-3xl font-bold text-white bg-blue-600 rounded-full">
-                    A
-                  </div>
-                  <div>
-                    <button className="px-4 py-2 text-white transition-colors bg-blue-600 rounded-lg hover:bg-blue-700">
-                      Thay đổi ảnh đại diện
-                    </button>
-                    <p className="mt-2 text-xs text-gray-500">
-                      JPG, PNG. Max 2MB
-                    </p>
-                  </div>
-                </div>
-
-                <div className="space-y-4">
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div>
-                      <label className="block mb-2 text-sm font-medium text-gray-700">
-                        Họ
-                      </label>
-                      <input
-                        type="text"
-                        defaultValue="Admin"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block mb-2 text-sm font-medium text-gray-700">
-                        Tên
-                      </label>
-                      <input
-                        type="text"
-                        defaultValue="User"
-                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                      />
-                    </div>
-                  </div>
-
-                  <div>
-                    <label className="block mb-2 text-sm font-medium text-gray-700">
-                      Email
-                    </label>
-                    <input
-                      type="email"
-                      defaultValue="admin@elearning.com"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block mb-2 text-sm font-medium text-gray-700">
-                      Số điện thoại
-                    </label>
-                    <input
-                      type="tel"
-                      defaultValue="+84 123 456 789"
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-
             {/* Notifications Settings */}
             {activeTab === 'notifications' && (
               <div className="space-y-6">
                 <div>
                   <h2 className="mb-4 text-xl font-bold text-gray-900">
-                    Notification Preferences
+                    Tùy chọn thông báo
                   </h2>
                   <p className="text-sm text-gray-600">
                     Quản lý thông báo và email
@@ -1024,7 +968,7 @@ export default function SettingsPage() {
                       <Mail className="w-5 h-5 text-gray-600" />
                       <div>
                         <p className="text-sm font-medium text-gray-900">
-                          Email Notifications
+                          Thông báo qua email
                         </p>
                         <p className="text-xs text-gray-500">
                           Nhận thông báo qua email
@@ -1049,7 +993,7 @@ export default function SettingsPage() {
                       <Bell className="w-5 h-5 text-gray-600" />
                       <div>
                         <p className="text-sm font-medium text-gray-900">
-                          Push Notifications
+                          Thông báo đẩy
                         </p>
                         <p className="text-xs text-gray-500">
                           Nhận thông báo trên trình duyệt
@@ -1074,7 +1018,7 @@ export default function SettingsPage() {
                       <Mail className="w-5 h-5 text-gray-600" />
                       <div>
                         <p className="text-sm font-medium text-gray-900">
-                          Weekly Report
+                          Báo cáo tuần
                         </p>
                         <p className="text-xs text-gray-500">
                           Báo cáo tuần qua email
@@ -1102,7 +1046,7 @@ export default function SettingsPage() {
               <div className="space-y-6">
                 <div>
                   <h2 className="mb-4 text-xl font-bold text-gray-900">
-                    Security Settings
+                    Cài đặt bảo mật
                   </h2>
                   <p className="text-sm text-gray-600">
                     Bảo mật tài khoản
@@ -1147,64 +1091,168 @@ export default function SettingsPage() {
                 </div>
 
                 <div className="pt-6 border-t">
-                  <h3 className="mb-4 text-lg font-semibold text-gray-900">
-                    Two-Factor Authentication
-                  </h3>
-                  <p className="mb-4 text-sm text-gray-600">
-                    Bảo mật 2 lớp giúp bảo vệ tài khoản của bạn tốt hơn
-                  </p>
-                  <button className="px-4 py-2 text-gray-700 transition-colors border border-gray-300 rounded-lg hover:bg-gray-50">
-                    Enable 2FA
-                  </button>
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        Xác thực hai lớp (2FA)
+                      </h3>
+                      <p className="mt-1 text-sm text-gray-600">
+                        Tính năng đang phát triển, sẽ mở khi hoàn thiện.
+                      </p>
+                    </div>
+                    <span className="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-xs font-medium text-gray-700">
+                      Sắp ra mắt
+                    </span>
+                  </div>
                 </div>
               </div>
             )}
 
-            {/* Appearance Settings */}
-            {activeTab === 'appearance' && (
+            {/* Payments Settings */}
+            {activeTab === 'payments' && (
               <div className="space-y-6">
                 <div>
                   <h2 className="mb-4 text-xl font-bold text-gray-900">
-                    Appearance Settings
+                    Cấu hình thanh toán
                   </h2>
                   <p className="text-sm text-gray-600">
-                    Tùy chỉnh giao diện hệ thống
+                    Thiết lập cổng thanh toán cho nền tảng.
                   </p>
                 </div>
 
                 <div className="space-y-4">
                   <div>
                     <label className="block mb-2 text-sm font-medium text-gray-700">
-                      Màu nền giao diện
+                      Cổng thanh toán
                     </label>
-                    <div className="grid grid-cols-3 gap-4">
-                      <button className="p-4 bg-white border-2 border-blue-600 rounded-lg">
-                        <div className="w-full h-12 mb-2 rounded bg-linear-to-br from-blue-500 to-purple-600"></div>
-                        <p className="text-sm font-medium">Light</p>
-                      </button>
-                      <button className="p-4 bg-white border-2 border-gray-200 rounded-lg hover:border-gray-300">
-                        <div className="w-full h-12 mb-2 rounded bg-linear-to-br from-gray-800 to-gray-900"></div>
-                        <p className="text-sm font-medium">Dark</p>
-                      </button>
-                      <button className="p-4 bg-white border-2 border-gray-200 rounded-lg hover:border-gray-300">
-                        <div className="w-full h-12 mb-2 rounded bg-linear-to-br from-blue-500 via-purple-600 to-gray-900"></div>
-                        <p className="text-sm font-medium">Auto</p>
-                      </button>
+                    <select
+                      value={settings.paymentGateway}
+                      onChange={(e) =>
+                        setSettings({
+                          ...settings,
+                          paymentGateway: e.target.value,
+                        })
+                      }
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="payos">PayOS</option>
+                      <option value="vnpay">VNPay</option>
+                      <option value="stripe">Stripe</option>
+                      <option value="manual">Chuyển khoản thủ công</option>
+                    </select>
+                  </div>
+
+                  <div className="grid gap-4 md:grid-cols-2">
+                    <div>
+                      <label className="block mb-2 text-sm font-medium text-gray-700">
+                        Khóa công khai
+                      </label>
+                      <input
+                        type="text"
+                        value={settings.paymentPublicKey}
+                        onChange={(e) =>
+                          setSettings({
+                            ...settings,
+                            paymentPublicKey: e.target.value,
+                          })
+                        }
+                        className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                    </div>
+                    <div>
+                      <label className="block mb-2 text-sm font-medium text-gray-700">
+                        Khóa bí mật
+                      </label>
+                      <input
+                        type="password"
+                        value={settings.paymentSecretKey}
+                        onChange={(e) =>
+                          setSettings({
+                            ...settings,
+                            paymentSecretKey: e.target.value,
+                          })
+                        }
+                        className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      />
                     </div>
                   </div>
 
                   <div>
                     <label className="block mb-2 text-sm font-medium text-gray-700">
-                      Bảng màu
+                      Bí mật webhook
                     </label>
-                    <div className="flex gap-3">
-                      <button className="w-12 h-12 bg-blue-600 border-2 border-gray-300 rounded-lg"></button>
-                      <button className="w-12 h-12 bg-green-600 border-2 border-gray-200 rounded-lg"></button>
-                      <button className="w-12 h-12 bg-purple-600 border-2 border-gray-200 rounded-lg"></button>
-                      <button className="w-12 h-12 bg-red-600 border-2 border-gray-200 rounded-lg"></button>
-                      <button className="w-12 h-12 bg-orange-600 border-2 border-gray-200 rounded-lg"></button>
-                    </div>
+                    <input
+                      type="password"
+                      value={settings.paymentWebhookSecret}
+                      onChange={(e) =>
+                        setSettings({
+                          ...settings,
+                          paymentWebhookSecret: e.target.value,
+                        })
+                      }
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* Revenue Share Settings */}
+            {activeTab === 'revenue' && (
+              <div className="space-y-6">
+                <div>
+                  <h2 className="mb-4 text-xl font-bold text-gray-900">
+                    Chia sẻ doanh thu
+                  </h2>
+                  <p className="text-sm text-gray-600">
+                    Thiết lập tỷ lệ chia sẻ giữa nền tảng và giảng viên.
+                  </p>
+                </div>
+
+                <div className="grid gap-4 md:grid-cols-2">
+                  <div>
+                    <label className="block mb-2 text-sm font-medium text-gray-700">
+                      Phí nền tảng (%)
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      step={0.1}
+                      value={settings.platformFeePercent}
+                      onChange={(e) =>
+                        setSettings({
+                          ...settings,
+                          platformFeePercent: Number(e.target.value),
+                        })
+                      }
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                  <div>
+                    <label className="block mb-2 text-sm font-medium text-gray-700">
+                      Giảng viên nhận (%)
+                    </label>
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      step={0.1}
+                      value={settings.instructorSharePercent}
+                      onChange={(e) =>
+                        setSettings({
+                          ...settings,
+                          instructorSharePercent: Number(e.target.value),
+                        })
+                      }
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700">
+                  Tổng hiện tại: <span className="font-semibold">{revenueTotal}%</span>.
+                  Gợi ý: 100%.
                 </div>
               </div>
             )}
@@ -1212,7 +1260,7 @@ export default function SettingsPage() {
             {/* Save Button */}
             <div className="flex justify-end gap-3 pt-6 mt-6 border-t">
               <button className="px-6 py-2 text-gray-700 transition-colors border border-gray-300 rounded-lg hover:bg-gray-50">
-                Huỷ
+                Hủy
               </button>
               <button
                 onClick={handleSave}

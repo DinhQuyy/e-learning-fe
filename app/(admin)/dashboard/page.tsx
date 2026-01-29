@@ -10,15 +10,28 @@ import {
   Activity,
   UserCheck,
   Clock,
+  AlertTriangle,
+  RefreshCcw,
+  FileText,
+  ClipboardCheck,
+  ShoppingCart,
+  Banknote,
 } from 'lucide-react';
 import Link from 'next/link';
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, type ComponentType } from 'react';
 
 type AnalyticsResponse = {
   totalUsers: number;
   activeStudents: number;
   totalCourses: number;
   avgCompletion: number;
+  totalRevenue?: number;
+  trend?: {
+    totalUsers?: number;
+    totalCourses?: number;
+    activeStudents?: number;
+    totalRevenue?: number;
+  };
   monthlyData: {
     month: string;
     activeStudents: number;
@@ -31,11 +44,29 @@ type AnalyticsResponse = {
     completion: number; // 0–100
     revenue: string; // "₫398.000"
   }[];
+  recentActivities?: {
+    id: number | string;
+    type?: 'user' | 'course' | 'system';
+    title: string;
+    time: string;
+  }[];
+  pendingCourseReviews?: number;
+  refundsPending?: number;
+  payoutsPending?: number;
+  reportsPending?: number;
   // nếu route.ts của bạn có thêm các field khác (totalEnrollments, …) thì để cũng không sao
 };
 
+type ActivityItem = {
+  id: number | string;
+  type?: 'user' | 'course' | 'system';
+  title: string;
+  time: string;
+  icon?: ComponentType<{ className?: string }>;
+};
+
 // ===== MOCK RECENT ACTIVITIES (chưa có log thật) =====
-const recentActivities = [
+const recentActivities: ActivityItem[] = [
   {
     id: 1,
     type: 'user',
@@ -115,19 +146,19 @@ export default function DashboardPage() {
     const fetchAnalytics = async () => {
       try {
         setError(null);
-        const res = await fetch('/api/admin/analytics');
+        const res = await fetch('/api/admin/dashboard?range=30');
         const json = await res.json().catch(() => null);
 
         if (!res.ok || !json) {
           throw new Error(
-            (json as any)?.message || 'Không lấy được dữ liệu analytics',
+            (json as any)?.message || 'Không lấy được dữ liệu dashboard',
           );
         }
 
         setAnalytics(json as AnalyticsResponse);
       } catch (err: any) {
-        console.error('Dashboard analytics error:', err);
-        setError(err?.message || 'Không lấy được dữ liệu analytics');
+        console.error('Dashboard error:', err);
+        setError(err?.message || 'Không lấy được dữ liệu dashboard');
       } finally {
         setLoading(false);
       }
@@ -156,21 +187,29 @@ export default function DashboardPage() {
     : lastMonth;
 
   // Trend cho dashboard (đơn giản, dùng dữ liệu tháng cuối vs tháng trước)
-  const activeTrend = calcTrend(
-    lastMonth.activeStudents || 0,
-    prevMonth.activeStudents || 0,
-  );
-  const coursesTrend = calcTrend(
-    lastMonth.activeCourses || 0,
-    prevMonth.activeCourses || 0,
-  );
-  const usersTrend = activeTrend; // tạm dùng cùng trend với active students
+  const activeTrend =
+    analytics?.trend?.activeStudents ??
+    calcTrend(
+      lastMonth.activeStudents || 0,
+      prevMonth.activeStudents || 0,
+    );
+  const coursesTrend =
+    analytics?.trend?.totalCourses ??
+    calcTrend(
+      lastMonth.activeCourses || 0,
+      prevMonth.activeCourses || 0,
+    );
+  const usersTrend =
+    analytics?.trend?.totalUsers ?? activeTrend; // tạm dùng cùng trend với active students
 
   // Tổng doanh thu = tổng revenue của topCourses từ API
   const totalRevenueNumber = useMemo(() => {
+    if (analytics?.totalRevenue != null) {
+      return analytics.totalRevenue;
+    }
     if (!analytics?.topCourses?.length) return 0;
     return analytics.topCourses.reduce((sum, course) => {
-      // revenue dạng "₫398.000" → chỉ lấy số
+      // revenue d?ng "?398.000" ? ch? l?y s?
       const digits = course.revenue.replace(/[^\d]/g, '');
       const value = parseInt(digits || '0', 10);
       return sum + value;
@@ -182,10 +221,17 @@ export default function DashboardPage() {
     : '₫' + totalRevenueNumber.toLocaleString('vi-VN');
 
   // Trend doanh thu: vì chưa có dữ liệu theo tháng nên dùng đơn giản:
-  const revenueTrend = totalRevenueNumber > 0 ? 100 : 0;
+  const revenueTrend =
+    analytics?.trend?.totalRevenue ??
+    (totalRevenueNumber > 0 ? 100 : 0);
 
   const formatTrend = (v: number) =>
     `${v >= 0 ? '+' : ''}${v.toFixed(1)}%`;
+
+  const pendingCourseReviews = analytics?.pendingCourseReviews ?? 0;
+  const refundsPending = analytics?.refundsPending ?? 0;
+  const payoutsPending = analytics?.payoutsPending ?? 0;
+  const reportsPending = analytics?.reportsPending ?? 0;
 
   // ===== TOP COURSES CHO BẢNG =====
   const topCourses =
@@ -199,6 +245,65 @@ export default function DashboardPage() {
           rating: parseFloat((c.completion / 20).toFixed(1)),
         }))
       : MOCK_TOP_COURSES;
+
+  const operationalAlerts = [
+    {
+      label: 'Khóa học chờ duyệt',
+      value: loading ? '...' : pendingCourseReviews.toLocaleString('vi-VN'),
+      valueNumber: pendingCourseReviews,
+      icon: BookOpen,
+      color: 'text-amber-700 bg-amber-100',
+      href: '/dashboard/courses?tab=pending-review',
+      description: 'Khóa học giảng viên gửi duyệt',
+    },
+    {
+      label: 'Hoàn tiền chờ xử lý',
+      value: loading ? '...' : refundsPending.toLocaleString('vi-VN'),
+      valueNumber: refundsPending,
+      icon: RefreshCcw,
+      color: 'text-red-700 bg-red-100',
+      href: '/dashboard/analytics?tab=orders-transactions&orders=refunds',
+      description: 'Yêu cầu hoàn tiền đang chờ',
+    },
+    {
+      label: 'Chi trả chờ xử lý',
+      value: loading ? '...' : payoutsPending.toLocaleString('vi-VN'),
+      valueNumber: payoutsPending,
+      icon: Banknote,
+      color: 'text-emerald-700 bg-emerald-100',
+      href: '/dashboard/analytics?tab=revenue-payouts&payouts=pending',
+      description: 'Đợt chi trả đang chờ duyệt',
+    },
+    {
+      label: 'Báo cáo chờ xử lý',
+      value: loading ? '...' : reportsPending.toLocaleString('vi-VN'),
+      valueNumber: reportsPending,
+      icon: FileText,
+      color: 'text-slate-700 bg-slate-100',
+      href: '/dashboard/courses?tab=moderation',
+      description: 'Báo cáo vi phạm nội dung',
+    },
+  ];
+
+
+  const activityIconByType: Record<
+    NonNullable<ActivityItem['type']> | 'default',
+    ComponentType<{ className?: string }>
+  > = {
+    user: UserCheck,
+    course: BookOpen,
+    system: Clock,
+    default: Activity,
+  };
+
+  const activities: ActivityItem[] =
+    analytics?.recentActivities?.length
+      ? analytics.recentActivities.map((item) => ({
+          ...item,
+          icon: activityIconByType[item.type ?? 'default'],
+        }))
+      : recentActivities;
+
 
   // ===== STATS ARRAY (DÙNG DỮ LIỆU THẬT) =====
   const stats = [
@@ -240,7 +345,7 @@ export default function DashboardPage() {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Dashboard Overview</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Tổng quan quản trị</h1>
         <p className="mt-2 text-gray-600">Chào mừng trở lại!</p>
         {error && (
           <p className="mt-1 text-sm text-orange-600">
@@ -305,8 +410,8 @@ export default function DashboardPage() {
           </div>
           <div className="p-6">
             <div className="space-y-4">
-              {recentActivities.map((activity) => {
-                const Icon = activity.icon;
+              {activities.map((activity) => {
+                const Icon = activity.icon ?? Activity;
                 return (
                   <div
                     key={activity.id}
@@ -335,33 +440,96 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Quick Actions */}
-        <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
-          <div className="p-6 border-b border-gray-200">
-            <h2 className="text-xl font-bold text-gray-900">Truy cập nhanh</h2>
+        <div className="space-y-6">
+          {/* Cảnh báo vận hành */}
+          <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
+            <div className="p-6 border-b border-gray-200">
+              <h2 className="text-xl font-bold text-gray-900">
+                Cảnh báo vận hành
+              </h2>
+            </div>
+            <div className="p-6 space-y-4">
+              {operationalAlerts.map((alert) => {
+                const Icon = alert.icon ?? AlertTriangle;
+                const isInactive = !loading && alert.valueNumber === 0;
+
+                return (
+                  <Link
+                    key={alert.label}
+                    href={alert.href}
+                    className={`flex items-center gap-4 p-3 rounded-lg bg-gray-50 transition-colors ${
+                      isInactive ? 'opacity-60' : 'hover:bg-gray-100'
+                    }`}
+                  >
+                    <div
+                      className={`flex items-center justify-center w-10 h-10 rounded-full ${alert.color}`}
+                    >
+                      <Icon className="w-5 h-5" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900">
+                        {alert.label}
+                      </p>
+                      <p className="text-xs text-gray-500">{alert.description}</p>
+                    </div>
+                    <div className="text-sm font-semibold text-gray-700">
+                      {alert.value}
+                    </div>
+                  </Link>
+                );
+              })}
+            </div>
           </div>
-          <div className="p-6 space-y-3">
-            <Link
-              href="/dashboard/users"
-              className="block w-full px-4 py-3 font-medium text-center text-blue-700 transition-colors rounded-lg bg-blue-50 hover:bg-blue-100"
-            >
-              <Users className="inline-block w-5 h-5 mr-2" />
-              Quản lý Người dùng
-            </Link>
-            <Link
-              href="/dashboard/courses"
-              className="block w-full px-4 py-3 font-medium text-center text-green-700 transition-colors rounded-lg bg-green-50 hover:bg-green-100"
-            >
-              <BookOpen className="inline-block w-5 h-5 mr-2" />
-              Quản lý Khoá học
-            </Link>
-            <Link
-              href="/dashboard/analytics"
-              className="block w-full px-4 py-3 font-medium text-center text-purple-700 transition-colors rounded-lg bg-purple-50 hover:bg-purple-100"
-            >
-              <TrendingUp className="inline-block w-5 h-5 mr-2" />
-              Thống kê Phân tích
-            </Link>
+
+          {/* Quick Actions */}
+          <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
+            <div className="p-6 border-b border-gray-200">
+              <h2 className="text-xl font-bold text-gray-900">Truy cập nhanh</h2>
+            </div>
+            <div className="p-6 space-y-3">
+              <Link
+                href="/dashboard/users"
+                className="block w-full px-4 py-3 font-medium text-center text-blue-700 transition-colors rounded-lg bg-blue-50 hover:bg-blue-100"
+              >
+                <Users className="inline-block w-5 h-5 mr-2" />
+                Quản lý Người dùng
+              </Link>
+              <Link
+                href="/dashboard/courses"
+                className="block w-full px-4 py-3 font-medium text-center text-green-700 transition-colors rounded-lg bg-green-50 hover:bg-green-100"
+              >
+                <BookOpen className="inline-block w-5 h-5 mr-2" />
+                Quản lý Khóa học
+              </Link>
+              <Link
+                href="/dashboard/analytics"
+                className="block w-full px-4 py-3 font-medium text-center text-purple-700 transition-colors rounded-lg bg-purple-50 hover:bg-purple-100"
+              >
+                <TrendingUp className="inline-block w-5 h-5 mr-2" />
+                Phân tích & Tài chính
+              </Link>
+              <Link
+                href="/dashboard/courses?tab=pending-review"
+                className="block w-full px-4 py-3 font-medium text-center text-amber-700 transition-colors rounded-lg bg-amber-50 hover:bg-amber-100"
+              >
+                <ClipboardCheck className="inline-block w-5 h-5 mr-2" />
+                Duyệt khóa học
+              </Link>
+              <Link
+                href="/dashboard/analytics?tab=orders-transactions&orders=pending"
+                className="block w-full px-4 py-3 font-medium text-center text-indigo-700 transition-colors rounded-lg bg-indigo-50 hover:bg-indigo-100"
+              >
+                <ShoppingCart className="inline-block w-5 h-5 mr-2" />
+                Đơn hàng
+              </Link>
+              <Link
+                href="/dashboard/analytics?tab=revenue-payouts&payouts=pending"
+                className="block w-full px-4 py-3 font-medium text-center text-emerald-700 transition-colors rounded-lg bg-emerald-50 hover:bg-emerald-100"
+              >
+                <Banknote className="inline-block w-5 h-5 mr-2" />
+                Chi trả
+              </Link>
+            </div>
           </div>
         </div>
       </div>
@@ -369,7 +537,7 @@ export default function DashboardPage() {
       {/* Top Courses */}
       <div className="bg-white border border-gray-200 rounded-lg shadow-sm">
         <div className="p-6 border-b border-gray-200">
-          <h2 className="text-xl font-bold text-gray-900">Top Khoá Học Nổi Trội</h2>
+          <h2 className="text-xl font-bold text-gray-900">Khoá học nổi bật</h2>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full">
